@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: ticket-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secretpassword}
+      POSTGRES_DB: ${DB_NAME:-ticket_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: ticket-web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-secretpassword}@db:5432/${DB_NAME:-ticket_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-supersecretjwttokenkey123!}
+      ATTACHMENTS_DIR: /app/attachments
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+    depends_on:
+      - db
+    volumes:
+      - attachments_data:/app/attachments
+
+  # Servizio separato per il worker IMAP che esegue il polling
+  imap-worker:
+    build: .
+    container_name: ticket-imap-worker
+    restart: always
+    command: node src/workers/imap-worker.js
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-secretpassword}@db:5432/${DB_NAME:-ticket_db}?schema=public
+      ATTACHMENTS_DIR: /app/attachments
+      IMAP_HOST: ${IMAP_HOST}
+      IMAP_PORT: ${IMAP_PORT}
+      IMAP_USER: ${IMAP_USER}
+      IMAP_PASS: ${IMAP_PASS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+    depends_on:
+      - db
+      - web
+    volumes:
+      - attachments_data:/app/attachments
+
+volumes:
+  pgdata:
+  attachments_data:

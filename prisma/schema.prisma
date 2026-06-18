@@ -1,0 +1,122 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STANDARD
+  HELPDESK
+  ADMIN
+}
+
+enum TicketStatus {
+  NUOVO
+  IN_VALUTAZIONE
+  RISOLTO
+  CHIUSO
+  NON_RISOLVIBILE
+  ANNULLATO
+}
+
+enum TicketPriority {
+  BASSA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum TicketCategory {
+  TMS
+  WMS
+  AMMINISTRATIVO
+  ALTRO
+}
+
+enum TicketOrigin {
+  PORTALE
+  EMAIL
+}
+
+enum MessageType {
+  INTERNAL_NOTE
+  USER_COMMUNICATION
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         Role          @default(STANDARD)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  // Relations
+  createdTickets  Ticket[]   @relation("TicketCreator")
+  assignedTickets Ticket[]   @relation("TicketOperator")
+  messages        Message[]
+
+  @@map("users")
+}
+
+model Ticket {
+  id                  String          @id @default(uuid())
+  ticketNumber        String          @unique // Format: TKT-YYYY-XXXXX
+  title               String
+  description         String
+  status              TicketStatus    @default(NUOVO)
+  priority            TicketPriority  @default(BASSA)
+  category            TicketCategory  @default(ALTRO)
+  origin              TicketOrigin    @default(PORTALE)
+  contact             String          // Sender email or phone for direct replies
+  targetCloseDate     DateTime?
+  
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  // Relations
+  creatorId           String?
+  creator             User?           @relation("TicketCreator", fields: [creatorId], references: [id])
+  operatorId          String?
+  operator            User?           @relation("TicketOperator", fields: [operatorId], references: [id])
+  messages            Message[]
+  attachments         Attachment[]
+
+  @@map("tickets")
+}
+
+model Message {
+  id          String      @id @default(uuid())
+  ticketId    String
+  ticket      Ticket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId    String?     // Null if sent by unregistered user via email
+  sender      User?       @relation(fields: [senderId], references: [id])
+  senderEmail String      // Author email
+  type        MessageType @default(USER_COMMUNICATION)
+  body        String
+  createdAt   DateTime    @default(now())
+  
+  attachments Attachment[]
+
+  @@map("messages")
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  filename  String
+  filePath  String   // Local path on the server volume
+  fileType  String   // MIME type (e.g. application/pdf, image/jpeg)
+  fileSize  Int      // Size in bytes
+  createdAt DateTime @default(now())
+
+  ticketId  String?
+  ticket    Ticket?  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
