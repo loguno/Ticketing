@@ -31,18 +31,23 @@ export default function LoginPage() {
         throw new Error(data.error || 'Autenticazione fallita.');
       }
 
-      // Successful login
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Si è verificato un errore.';
       setError(errorMessage);
       setShouldShake(true);
-      // Reset shake animation after 500ms
       setTimeout(() => setShouldShake(false), 500);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Autofill helper for demo/testing
+  const handleAutofill = (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    setError(null);
   };
 
   return (
@@ -55,161 +60,163 @@ export default function LoginPage() {
         }
         .animate-shake {
           animation: shake 0.4s ease-in-out;
-          border-color: var(--error) !important;
         }
       `}} />
 
-      <main className="min-h-screen w-full flex flex-col md:flex-row bg-[#F5F0EB]">
-        {/* Left Visual Panel: 70% width on large screens */}
-        <section className="relative w-full md:w-[70%] bg-[#0D0D0D] flex flex-col justify-between p-8 md:p-16 overflow-hidden border-b-4 md:border-b-0 md:border-r-4 border-black">
-          {/* Diagonal Industrial SVG Grid Pattern */}
-          <div className="absolute inset-0 opacity-20 pointer-events-none">
-            <svg width="100%" height="100%">
-              <defs>
-                <pattern id="diagonal-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 0 40 L 40 0 M 0 0 L 40 40" fill="none" stroke="#E85D04" strokeWidth="1.5" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#diagonal-grid)" />
-            </svg>
-          </div>
+      <main className="relative min-h-screen w-full flex items-center justify-center bg-[#F5F0EB] text-[#0D0D0D] overflow-hidden px-4">
+        
+        {/* Background glow effects */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#11BCEC] opacity-[0.03] blur-[120px] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-[#11BCEC] opacity-[0.015] blur-[100px] rounded-full pointer-events-none"></div>
 
-          {/* Absolute Accent Line */}
-          <div className="absolute top-0 left-0 w-full h-2 bg-[#E85D04]"></div>
+        {/* Tech Grid Overlay */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+          <svg width="100%" height="100%">
+            <defs>
+              <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#000000" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
 
-          {/* Top Logo area */}
-          <div className="z-10 flex items-center gap-3 font-mono text-sm tracking-wider text-white">
-            <span className="h-4 w-4 bg-[#E85D04] inline-block animate-pulse"></span>
-            <span>SYSTEM OVERWATCH // IT INFRASTRUCTURE</span>
-          </div>
-
-          {/* Core Branding Text */}
-          <div className="z-10 my-auto py-12 md:py-0">
-            <span className="text-xs font-mono text-[#E85D04] tracking-widest block uppercase mb-2">
-              [ SEGNALAZIONE E TRIAGE INCIDENTI ]
-            </span>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tighter uppercase leading-none font-mono">
-              PORTALE<br />
-              <span className="text-[#E85D04]">TICKET</span><br />
-              AZIENDALI
+        {/* Main Card Container */}
+        <div className="relative z-10 w-full max-w-md">
+          
+          {/* Header branding */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#11BCEC]/30 bg-[#11BCEC]/5 text-xs text-[#004B97] font-mono tracking-wider uppercase mb-3 font-bold">
+              <span className="h-2 w-2 rounded-full bg-[#11BCEC] animate-pulse"></span>
+              PORTALE TICKET IT
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-black uppercase font-sans">
+              LOGISTICA UNO
             </h1>
-            <p className="mt-6 text-sm md:text-base text-gray-400 font-mono max-w-lg leading-relaxed">
-              Sistema integrato per la risoluzione dei disservizi tecnici, tracciamento startup clienti e sviluppo nuove idee IT.
+            <p className="text-sm text-gray-500 mt-2">
+              Gestione segnalazioni, attività startup e idee di sviluppo
             </p>
           </div>
 
-          {/* Footer Metadata */}
-          <div className="z-10 flex flex-wrap gap-x-8 gap-y-2 font-mono text-xs text-gray-500 uppercase mt-auto">
-            <div>LOGISTICA UNO EUROPE IT</div>
-            <div>REV: 2026.1 // ON-PREMISE</div>
-          </div>
-        </section>
+          {/* Login Card */}
+          <div 
+            className={`bg-white border border-black/10 p-8 rounded-2xl shadow-xl transition-all duration-300 ${
+              shouldShake ? 'animate-shake border-red-500' : ''
+            }`}
+          >
+            <h2 className="text-xl font-bold text-black mb-6 font-sans">Accedi al sistema</h2>
 
-        {/* Right Form Panel: 30% width on large screens */}
-        <section className="w-full md:w-[30%] bg-[#F5F0EB] flex flex-col justify-center p-8 md:p-12">
-          <div className={`w-full max-w-sm mx-auto transition-transform ${shouldShake ? 'animate-shake' : ''}`}>
-            
-            {/* Form Title */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-black uppercase text-[#0D0D0D] tracking-tight font-mono">
-                AUTENTICAZIONE
-              </h2>
-              <div className="h-1 w-12 bg-[#E85D04] mt-2"></div>
-            </div>
-
-            {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-white border-l-4 border-[#D62839] text-[#D62839] text-xs font-mono uppercase tracking-wider">
-                <strong>[ERRORE AT]</strong> {error}
+              <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-mono">
+                <strong>[ERRORE]</strong> {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               
-              {/* Email Input Field */}
-              <div className="relative border-2 border-black bg-white focus-within:border-[#E85D04] transition-colors duration-150 p-2">
+              {/* Email Input */}
+              <div className="space-y-1.5">
+                <label htmlFor="email" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Email Aziendale
+                </label>
                 <input
                   type="email"
                   id="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="peer w-full bg-transparent border-none text-[#0D0D0D] font-mono text-sm focus:outline-none p-1 pt-4 pb-1"
-                  placeholder=" "
+                  placeholder="nome.cognome@azienda.it"
+                  className="w-full bg-white border border-black/10 rounded-lg px-4 py-3 text-sm text-black placeholder-gray-400 focus:outline-none focus:border-[#11BCEC] focus:ring-1 focus:ring-[#11BCEC]/20 transition-all"
                   disabled={isLoading}
                 />
-                <label
-                  htmlFor="email"
-                  className="absolute left-3 top-2.5 text-xs text-gray-500 font-mono uppercase transition-all duration-150 origin-left
-                    peer-placeholder-shown:text-sm peer-placeholder-shown:top-3.5
-                    peer-focus:text-xs peer-focus:top-1 peer-focus:text-[#E85D04]
-                    peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:top-1"
-                >
-                  EMAIL AZIENDALE
-                </label>
               </div>
 
-              {/* Password Input Field */}
-              <div className="relative border-2 border-black bg-white focus-within:border-[#E85D04] transition-colors duration-150 p-2 flex items-center justify-between">
-                <div className="relative flex-grow">
+              {/* Password Input */}
+              <div className="space-y-1.5">
+                <label htmlFor="password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Password
+                </label>
+                <div className="relative flex items-center">
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="peer w-full bg-transparent border-none text-[#0D0D0D] font-mono text-sm focus:outline-none p-1 pt-4 pb-1"
-                    placeholder=" "
+                    placeholder="••••••••"
+                    className="w-full bg-white border border-black/10 rounded-lg pl-4 pr-12 py-3 text-sm text-black placeholder-gray-400 focus:outline-none focus:border-[#11BCEC] focus:ring-1 focus:ring-[#11BCEC]/20 transition-all"
                     disabled={isLoading}
                   />
-                  <label
-                    htmlFor="password"
-                    className="absolute left-1 top-2.5 text-xs text-gray-500 font-mono uppercase transition-all duration-150 origin-left
-                      peer-placeholder-shown:text-sm peer-placeholder-shown:top-3.5
-                      peer-focus:text-xs peer-focus:top-1 peer-focus:text-[#E85D04]
-                      peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:top-1"
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 text-xs font-mono font-bold uppercase text-gray-450 hover:text-black transition-colors duration-150 select-none"
+                    tabIndex={-1}
                   >
-                    PASSWORD
-                  </label>
+                    {showPassword ? "Nascondi" : "Mostra"}
+                  </button>
                 </div>
-                
-                {/* Visual/occultamento password button */}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-xs font-mono font-bold uppercase text-[#0D0D0D] hover:text-[#E85D04] px-2 py-1 select-none transition-colors duration-150"
-                  tabIndex={-1}
-                >
-                  {showPassword ? "NASCONDI" : "MOSTRA"}
-                </button>
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#E85D04] hover:bg-[#C94E03] text-white font-mono font-bold uppercase py-3 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-[#11BCEC] hover:bg-[#004B97] text-white font-semibold py-3 rounded-lg transition-all shadow-xs hover:shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isLoading ? (
                   <>
                     <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    <span>ATTENDI...</span>
+                    <span>Elaborazione in corso...</span>
                   </>
                 ) : (
-                  <span>ACCEDI AL SISTEMA</span>
+                  <span>Accedi</span>
                 )}
               </button>
 
             </form>
 
-            {/* Support info link */}
-            <div className="mt-8 pt-6 border-t border-gray-300 flex flex-col gap-1 text-center font-mono text-xs text-gray-500 uppercase">
-              <span>Difficoltà di accesso?</span>
-              <span className="text-[#0D0D0D]">Contattare assistenza interna</span>
+            {/* DEMO ACCOUNTS QUICK-FILL SECTION */}
+            <div className="mt-8 pt-6 border-t border-black/10">
+              <span className="block text-xs font-mono text-[#004B97] tracking-widest uppercase mb-3 text-center font-bold">
+                [ ACCESSO RAPIDO DEMO ]
+              </span>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAutofill('admin@azienda.it', 'AdminPass123!')}
+                  className="w-full bg-black/5 hover:bg-black/10 text-gray-700 border border-black/10 rounded-lg py-2 px-3 text-xs font-mono transition-all flex justify-between items-center cursor-pointer"
+                >
+                  <span>Amministratore (ADMIN)</span>
+                  <span className="text-gray-500 font-sans">Seleziona &rarr;</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutofill('helpdesk-op@azienda.it', 'HelpdeskPass123!')}
+                  className="w-full bg-black/5 hover:bg-black/10 text-gray-700 border border-black/10 rounded-lg py-2 px-3 text-xs font-mono transition-all flex justify-between items-center cursor-pointer"
+                >
+                  <span>Operatore IT (HELPDESK)</span>
+                  <span className="text-gray-500 font-sans">Seleziona &rarr;</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutofill('utente@azienda.it', 'UserPass123!')}
+                  className="w-full bg-black/5 hover:bg-black/10 text-gray-700 border border-black/10 rounded-lg py-2 px-3 text-xs font-mono transition-all flex justify-between items-center cursor-pointer"
+                >
+                  <span>Utente Standard (STANDARD)</span>
+                  <span className="text-gray-500 font-sans">Seleziona &rarr;</span>
+                </button>
+              </div>
             </div>
 
           </div>
-        </section>
+
+          {/* Footer info */}
+          <p className="text-center text-xs text-gray-400 font-mono mt-6 uppercase">
+            Sistema On-Premise // Logistica Uno Europe SRL
+          </p>
+
+        </div>
       </main>
     </>
   );

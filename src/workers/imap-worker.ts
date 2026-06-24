@@ -37,16 +37,16 @@ async function parseAndSaveAttachments(attachments: MailAttachment[], ticketId: 
       continue;
     }
 
-    const uniqueFilename = `${Date.now()}-${att.filename || 'attachment'}`;
-    const filePath = path.join(ATTACHMENTS_DIR, uniqueFilename);
+    const filename = att.filename || 'attachment';
+    const filePath = path.join(ATTACHMENTS_DIR, filename);
 
-    // Save the file buffer to disk
+    // Save the file buffer to disk (will overwrite if exists)
     fs.writeFileSync(filePath, att.content);
 
     // Save attachment record in database
     const record = await db.attachment.create({
       data: {
-        filename: att.filename || 'unnamed_file',
+        filename: filename,
         filePath: filePath,
         fileType: att.contentType || 'application/octet-stream',
         fileSize: att.size,

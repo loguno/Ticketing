@@ -59,6 +59,7 @@ model User {
   createdTickets  Ticket[]   @relation("TicketCreator")
   assignedTickets Ticket[]   @relation("TicketOperator")
   messages        Message[]
+  assignedSubactivities StartupSubactivity[]
 
   @@map("users")
 }
@@ -120,3 +121,59 @@ model Attachment {
 
   @@map("attachments")
 }
+
+enum StartupStatus {
+  NUOVO
+  IN_LAVORAZIONE
+  CONCLUSO
+}
+
+enum SubactivityStatus {
+  DA_FARE
+  IN_CORSO
+  COMPLETATA
+}
+
+model StartupActivity {
+  id                   String          @id @default(uuid())
+  title                String
+  description          String?
+  clientProject        String?         // Cliente/Progetto
+  startDate            DateTime?
+  targetCompleteDate   DateTime?       // Data prevista completamento
+  status               StartupStatus   @default(NUOVO)
+  
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  // Relations
+  subactivities        StartupSubactivity[]
+
+  @@map("startup_activities")
+}
+
+model StartupSubactivity {
+  id                   String            @id @default(uuid())
+  startupActivityId    String
+  startupActivity      StartupActivity   @relation(fields: [startupActivityId], references: [id], onDelete: Cascade)
+  title                String
+  description          String?
+  responsibleId        String?           // Responsabile (User)
+  responsible          User?             @relation(fields: [responsibleId], references: [id])
+  status               SubactivityStatus @default(DA_FARE)
+  progressNotes        String?           // Note di avanzamento
+  completedAt          DateTime?         // Data completamento parziale
+
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@map("startup_subactivities")
+}
+
+model SystemSetting {
+  key   String @id
+  value String
+
+  @@map("system_settings")
+}
+

@@ -60,3 +60,43 @@ export async function sendTicketEmail({
 
   return transporter.sendMail(mailOptions);
 }
+
+interface SendStartupEmailParams {
+  to: string;
+  subject: string;
+  bodyText: string;
+  bodyHtml?: string;
+}
+
+export async function sendStartupEmail({
+  to,
+  subject,
+  bodyText,
+  bodyHtml,
+}: SendStartupEmailParams) {
+  const defaultHtml = `
+    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+      <div style="border-bottom: 2px solid #ea580c; padding-bottom: 12px; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #7c2d12; font-size: 1.5rem;">Portale Gestione Attività IT</h2>
+        <span style="font-size: 0.875rem; color: #ea580c; font-weight: bold; text-transform: uppercase;">Notifica Attività Start Up</span>
+      </div>
+      <div style="line-height: 1.6; margin-bottom: 24px; font-size: 0.95rem;">
+        ${bodyHtml || bodyText.replace(/\n/g, '<br>')}
+      </div>
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 0.75rem; color: #64748b; text-align: center;">
+        Questa è una notifica automatica relativa alle attività di Startup. Si prega di non rispondere direttamente a questa email.
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to,
+    subject,
+    text: bodyText,
+    html: defaultHtml,
+  };
+
+  return transporter.sendMail(mailOptions);
+}
+
