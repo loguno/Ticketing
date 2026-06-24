@@ -15,11 +15,12 @@ interface SubactivityInput {
 
 interface StartupFormProps {
   allUsers: UserInfo[];
+  boardType?: 'STARTUP' | 'TMS' | 'WMS' | 'CROSS_DOCKING';
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export default function StartupForm({ allUsers, onSuccess, onCancel }: StartupFormProps) {
+export default function StartupForm({ allUsers, boardType = 'STARTUP', onSuccess, onCancel }: StartupFormProps) {
   const [title, setTitle] = useState('');
   const [clientProject, setClientProject] = useState('');
   const [description, setDescription] = useState('');
@@ -28,6 +29,26 @@ export default function StartupForm({ allUsers, onSuccess, onCancel }: StartupFo
   const [subactivities, setSubactivities] = useState<SubactivityInput[]>([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const getBoardTitle = () => {
+    const titles = {
+      STARTUP: 'CREA ATTIVITÀ START UP',
+      TMS: 'CREA ATTIVITÀ TMS',
+      WMS: 'CREA ATTIVITÀ WMS',
+      CROSS_DOCKING: 'CREA ATTIVITÀ CROSS DOCKING',
+    };
+    return titles[boardType] || 'CREA ATTIVITÀ START UP';
+  };
+  
+  const getBoardSub = () => {
+    const subs = {
+      STARTUP: '[ NUOVA COMPILAZIONE STARTUP ]',
+      TMS: '[ NUOVA COMPILAZIONE TMS ]',
+      WMS: '[ NUOVA COMPILAZIONE WMS ]',
+      CROSS_DOCKING: '[ NUOVA COMPILAZIONE CROSS DOCKING ]',
+    };
+    return subs[boardType] || '[ NUOVA COMPILAZIONE STARTUP ]';
+  };
 
   const handleAddSubactivity = () => {
     setSubactivities([
@@ -76,6 +97,7 @@ export default function StartupForm({ allUsers, onSuccess, onCancel }: StartupFo
           description: description.trim() || null,
           startDate: startDate || null,
           targetCompleteDate: targetCompleteDate || null,
+          boardType,
           subactivities: subactivities.map((sub) => ({
             title: sub.title.trim(),
             description: sub.description.trim() || null,
@@ -103,10 +125,10 @@ export default function StartupForm({ allUsers, onSuccess, onCancel }: StartupFo
       <div className="flex justify-between items-center border-b border-black/10 pb-4">
         <div>
           <span className="font-mono text-xs text-[#004B97] tracking-widest uppercase block font-bold">
-            [ NUOVA COMPILAZIONE STARTUP ]
+            {getBoardSub()}
           </span>
           <h3 className="text-xl font-bold uppercase text-black tracking-tight mt-1">
-            CREA ATTIVITÀ START UP
+            {getBoardTitle()}
           </h3>
         </div>
         <button

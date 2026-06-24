@@ -103,12 +103,16 @@ export async function PUT(
           NUOVO: 'Nuovo',
           IN_LAVORAZIONE: 'In Lavorazione',
           CONCLUSO: 'Concluso',
+          SOSPESO: 'Sospeso',
+          ANNULLATO: 'Annullato',
         };
+
+        const boardLabel = updated.boardType || 'STARTUP';
 
         sendStartupEmail({
           to: targetEmail,
-          subject: `[STARTUP-UPDATE] Avanzamento Stato: ${updated.title}`,
-          bodyText: `L'attività di Start Up "${updated.title}" ha cambiato stato.
+          subject: `[${boardLabel}-UPDATE] Avanzamento Stato: ${updated.title}`,
+          bodyText: `L'attività di ${boardLabel} "${updated.title}" ha cambiato stato.
 
 DETTAGLI:
 ------------------------------------------
@@ -118,7 +122,7 @@ Vecchio Stato: ${statusLabels[existing.status] || existing.status}
 Nuovo Stato: ${statusLabels[updated.status] || updated.status}
 `,
           bodyHtml: `
-            <p>L'attività di Start Up <strong>${updated.title}</strong> ha cambiato stato.</p>
+            <p>L'attività di <strong>${boardLabel}</strong> <strong>${updated.title}</strong> ha cambiato stato.</p>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
             <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
               <tr>

@@ -26,9 +26,9 @@ export default function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={isLoggingOut}
-      className="w-full bg-white hover:bg-black/5 text-[#0D0D0D] font-mono text-xs font-bold uppercase px-4 py-2.5 border border-black/10 hover:border-[#11BCEC]/50 rounded-lg shadow-xs hover:shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-50 text-center"
+      className="w-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white font-mono text-xs font-bold uppercase px-4 py-2.5 border border-white/15 hover:border-white/30 rounded-xl transition-all duration-150 cursor-pointer disabled:opacity-50 text-center"
     >
-      {isLoggingOut ? 'Disconnessione...' : 'Disconnetti'}
+      {isLoggingOut ? 'Disconnessione...' : '⎋ Disconnetti'}
     </button>
   );
 }

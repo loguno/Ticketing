@@ -19,21 +19,22 @@ const SIDEBAR_MAX = 480;
 const SIDEBAR_DEFAULT = 256;
 
 export default function ResizableLayout({ user, children }: ResizableLayoutProps) {
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    // On SSR, window is not available, default to 256
-    if (typeof window === 'undefined') return SIDEBAR_DEFAULT;
-    const saved = localStorage.getItem('sidebar-width');
-    if (saved) {
-      const parsed = parseInt(saved, 10);
-      if (parsed >= SIDEBAR_MIN && parsed <= SIDEBAR_MAX) return parsed;
-    }
-    return SIDEBAR_DEFAULT;
-  });
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const draggingRef = useRef(false);
 
   useEffect(() => {
+    // Load width from localStorage on mount (client-only)
+    const saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (parsed >= SIDEBAR_MIN && parsed <= SIDEBAR_MAX) {
+        // Wrap in setTimeout to avoid synchronous setState inside useEffect warning
+        setTimeout(() => setSidebarWidth(parsed), 0);
+      }
+    }
+
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener('resize', check);

@@ -32,12 +32,13 @@ interface Ticket {
   ticketNumber: string;
   title: string;
   description: string;
-  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO';
+  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
   priority: 'BASSA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
   contact: string;
   targetCloseDate: string | null;
+  isSuggestion: boolean;
   createdAt: string;
   creatorId: string | null;
   operatorId: string | null;
@@ -73,6 +74,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
   const [category, setCategory] = useState<Ticket['category']>('ALTRO');
   const [operatorId, setOperatorId] = useState<string>('');
   const [targetCloseDate, setTargetCloseDate] = useState<string>('');
+  const [isSuggestion, setIsSuggestion] = useState<boolean>(false);
   const [sendNotification, setSendNotification] = useState(true);
 
   // New message fields
@@ -99,6 +101,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
         setPriority(ticketData.ticket.priority);
         setCategory(ticketData.ticket.category);
         setOperatorId(ticketData.ticket.operatorId || '');
+        setIsSuggestion(ticketData.ticket.isSuggestion || false);
         setTargetCloseDate(
           ticketData.ticket.targetCloseDate
             ? new Date(ticketData.ticket.targetCloseDate).toISOString().substring(0, 10)
@@ -140,6 +143,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
           category,
           operatorId: operatorId || null,
           targetCloseDate: targetCloseDate || null,
+          isSuggestion,
           sendNotification,
         }),
       });
@@ -273,7 +277,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
         </div>
 
         {/* Header Title block */}
-        <div className="bg-white border border-black/10 p-6 rounded-xl shadow-xs">
+        <div className="bg-white border border-black/[0.07] p-6 rounded-2xl shadow-xs">
           <span className="font-mono text-xs text-[#004B97] tracking-widest uppercase block mb-1">[ TITOLO SEGNALAZIONE ]</span>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-black uppercase font-sans break-words">
             {ticket.title}
@@ -287,7 +291,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
           <div className="lg:col-span-2 space-y-6 min-w-0">
             
             {/* Ticket Description block */}
-            <div className="bg-white border border-black/10 p-6 rounded-xl space-y-4 shadow-xs">
+            <div className="bg-white border border-black/[0.07] p-6 rounded-2xl space-y-4 shadow-xs">
               <div>
                 <span className="font-mono text-[10px] text-[#004B97] tracking-widest uppercase block mb-2">[ DESCRIZIONE INIZIALE ]</span>
                 <p className="text-sm text-gray-700 leading-relaxed font-sans whitespace-pre-wrap break-words">
@@ -325,7 +329,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
               
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                 {messages.length === 0 ? (
-                  <div className="p-8 text-center text-xs font-mono text-gray-400 uppercase border border-dashed border-black/10 bg-white rounded-xl">
+                  <div className="p-8 text-center text-xs font-mono text-gray-400 uppercase border border-dashed border-black/[0.07] bg-white rounded-2xl">
                     Nessuna comunicazione registrata per questo ticket.
                   </div>
                 ) : (
@@ -398,7 +402,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
             </div>
 
             {/* Reply Form */}
-            <div className="bg-white border border-black/10 p-6 rounded-xl space-y-4 shadow-xs">
+            <div className="bg-white border border-black/[0.07] p-6 rounded-2xl space-y-4 shadow-xs">
               <div>
                 <span className="font-mono text-[10px] text-[#004B97] tracking-widest uppercase block mb-1">[ INVIA RISPOSTA ]</span>
                 <h3 className="text-md font-bold uppercase text-black tracking-tight font-sans">Scrivi un messaggio</h3>
@@ -519,7 +523,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
             
             {/* Triage / Management Panel */}
             {showTriagePanel && (
-              <div className="bg-white border border-black/10 p-6 rounded-xl space-y-4 shadow-xs">
+              <div className="bg-white border border-black/[0.07] p-6 rounded-2xl space-y-4 shadow-xs">
                 <div>
                   <span className="font-mono text-[10px] text-[#004B97] tracking-widest uppercase block mb-1">[ PANNELLO GESTIONE ]</span>
                   <h3 className="text-md font-bold uppercase text-black tracking-tight font-sans">Triage &amp; Assegnazione</h3>
@@ -550,6 +554,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                     >
                       <option value="NUOVO">Da valutare</option>
                       <option value="IN_VALUTAZIONE">In Valutazione</option>
+                      <option value="SOSPESO">Sospeso</option>
                       <option value="RISOLTO">Risolto</option>
                       <option value="CHIUSO">Chiuso</option>
                       <option value="NON_RISOLVIBILE">Non Risolvibile</option>
@@ -638,6 +643,21 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                     </label>
                   </div>
 
+                  {/* Suggerimento / Nuova Idea */}
+                  <div className="flex items-center gap-2 pt-1 text-gray-600">
+                    <input
+                      type="checkbox"
+                      id="t-suggestion"
+                      checked={isSuggestion}
+                      onChange={(e) => setIsSuggestion(e.target.checked)}
+                      className="accent-[#11BCEC]"
+                      disabled={isUpdating}
+                    />
+                    <label htmlFor="t-suggestion" className="cursor-pointer select-none flex items-center gap-1.5 font-bold text-[#004B97]">
+                      💡 Segnala come Suggerimento
+                    </label>
+                  </div>
+
                   {/* Submit */}
                   <button
                     type="submit"
@@ -651,7 +671,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
             )}
 
             {/* Ticket Information card */}
-            <div className="bg-white border border-black/10 p-6 rounded-xl space-y-4 text-xs font-mono shadow-xs">
+            <div className="bg-white border border-black/[0.07] p-6 rounded-2xl space-y-4 text-xs font-mono shadow-xs">
               <div>
                 <span className="font-mono text-[10px] text-[#004B97] tracking-widest uppercase block mb-1">[ INFORMAZIONI GENERALI ]</span>
                 <h3 className="text-md font-bold uppercase text-black tracking-tight font-sans">Scheda Ticket</h3>
@@ -672,6 +692,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                     ticket.status === 'NUOVO' ? 'text-blue-700' :
                     ticket.status === 'IN_VALUTAZIONE' ? 'text-[#C94E03]' :
                     ticket.status === 'RISOLTO' ? 'text-emerald-700' :
+                    ticket.status === 'SOSPESO' ? 'text-slate-650' :
                     'text-gray-550'
                   }`}>
                     {{
@@ -681,6 +702,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                       CHIUSO: 'Chiuso',
                       NON_RISOLVIBILE: 'Non Risolvibile',
                       ANNULLATO: 'Annullato',
+                      SOSPESO: 'Sospeso',
                     }[ticket.status]}
                   </span>
                 </div>

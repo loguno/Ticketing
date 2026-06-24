@@ -3,174 +3,236 @@ import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
+// --- SVG Donut Chart helper ---
+function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) {
+    return (
+      <div className="flex items-center justify-center h-[160px] text-sm text-gray-400">
+        Nessun dato
+      </div>
+    );
+  }
+  const cx = 80; const cy = 80; const r = 60; const strokeW = 22;
+  const circumference = 2 * Math.PI * r;
+  let currentAccumulator = 0;
+  const segments = [];
+  for (const d of data) {
+    const percent = total > 0 ? d.value / total : 0;
+    const strokeDasharray = `${percent * circumference} ${circumference}`;
+    const strokeDashoffset = -currentAccumulator * circumference;
+    currentAccumulator += percent;
+    segments.push({ ...d, percent, strokeDasharray, strokeDashoffset });
+  }
+
+  return (
+    <div className="flex items-center gap-6">
+      <svg width="160" height="160" viewBox="0 0 160 160" className="shrink-0">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth={strokeW} />
+        {segments.map((seg, i) => (
+          <circle
+            key={i}
+            cx={cx} cy={cy} r={r}
+            fill="none"
+            stroke={seg.color}
+            strokeWidth={strokeW}
+            strokeDasharray={seg.strokeDasharray}
+            strokeDashoffset={seg.strokeDashoffset}
+            strokeLinecap="butt"
+            transform="rotate(-90 80 80)"
+            style={{ transition: 'stroke-dasharray 0.5s ease' }}
+          />
+        ))}
+        <text x={cx} y={cy - 6} textAnchor="middle" className="text-xl" style={{ fontWeight: 900, fontSize: 26, fill: '#111827' }}>{total}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" style={{ fontSize: 9, fill: '#9ca3af', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1 }}>totale</text>
+      </svg>
+      <ul className="space-y-2 text-xs">
+        {segments.map(seg => (
+          <li key={seg.label} className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: seg.color }} />
+            <span className="text-gray-600 font-medium">{seg.label}</span>
+            <span className="ml-auto font-black text-gray-900 pl-3">{seg.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// --- SVG Horizontal Bar Chart ---
+function BarChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const max = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div className="space-y-3">
+      {data.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-4">Nessun dato</p>
+      ) : (
+        data.map((d, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 font-medium w-24 truncate shrink-0">{d.label}</span>
+            <div className="flex-grow bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="h-2.5 rounded-full transition-all duration-500"
+                style={{ width: `${(d.value / max) * 100}%`, background: d.color }}
+              />
+            </div>
+            <span className="text-xs font-black text-gray-800 w-6 text-right shrink-0">{d.value}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// --- KPI Card ---
+function KpiCard({ label, value, tag, color, tagColor }: {
+  label: string; value: number; tag: string; color: string; tagColor: string;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-black/[0.07] p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+      style={{ borderLeftColor: color }}>
+      <div className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">{label}</div>
+      <div className="flex items-center justify-center gap-3 mt-3 w-full">
+        <span className="text-4xl font-black text-gray-900 tracking-tight">{value}</span>
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+          style={{ background: tagColor + '20', color: tagColor }}>{tag}</span>
+      </div>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const headersList = await headers();
   const userId = headersList.get('x-user-id');
 
-  if (!userId) {
-    redirect('/login');
-  }
+  if (!userId) redirect('/login');
 
-  // Retrieve authenticated user from SQLite DB
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
+    select: { id: true, name: true, role: true },
   });
 
-  if (!user) {
-    redirect('/login');
-  }
+  if (!user) redirect('/login');
+  if (user.role === 'STANDARD') redirect('/dashboard/tickets');
 
-  if (user.role === 'STANDARD') {
-    redirect('/dashboard/tickets');
-  }
+  // --- KPI queries ---
+  const [totalOpen, triageCount, myTickets, resolved, openStartups] = await Promise.all([
+    db.ticket.count({ where: { status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } } }),
+    db.ticket.count({ where: { status: 'NUOVO' } }),
+    db.ticket.count({ where: { operatorId: userId, status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } } }),
+    db.ticket.count({ where: { status: 'RISOLTO' } }),
+    db.startupActivity.count({ where: { status: { in: ['NUOVO', 'IN_LAVORAZIONE'] } } }),
+  ]);
 
-  // Retrieve actual ticket metrics
-  const totalOpenTickets = await db.ticket.count({
-    where: {
-      status: {
-        in: ['NUOVO', 'IN_VALUTAZIONE'],
-      },
-    },
+  // --- Donut: tickets per categoria ---
+  const byCategory = await db.ticket.groupBy({
+    by: ['category'],
+    _count: { id: true },
+    where: { status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } },
   });
+  const catColors: Record<string, string> = {
+    TMS: '#11BCEC', WMS: '#004B97', AMMINISTRATIVO: '#10B981', ALTRO: '#F59E0B',
+  };
+  const categoryData = byCategory.map(c => ({
+    label: c.category,
+    value: c._count.id,
+    color: catColors[c.category] ?? '#94a3b8',
+  }));
 
-  const triageCount = await db.ticket.count({
-    where: {
-      status: 'NUOVO',
-    },
+  // --- Donut: tickets per stato ---
+  const byStatus = await db.ticket.groupBy({
+    by: ['status'],
+    _count: { id: true },
   });
+  const statusColors: Record<string, string> = {
+    NUOVO: '#3B82F6', IN_VALUTAZIONE: '#F59E0B', RISOLTO: '#10B981',
+    CHIUSO: '#6B7280', NON_RISOLVIBILE: '#EF4444', ANNULLATO: '#9CA3AF',
+  };
+  const statusData = byStatus.map(s => ({
+    label: s.status.replace('_', ' '),
+    value: s._count.id,
+    color: statusColors[s.status] ?? '#94a3b8',
+  }));
 
-  const myTicketsCount = await db.ticket.count({
-    where: {
-      operatorId: userId,
-      status: { in: ['NUOVO', 'IN_VALUTAZIONE'] },
-    },
+  // --- Bar chart: tickets per operatore ---
+  const byOperator = await db.ticket.groupBy({
+    by: ['operatorId'],
+    _count: { id: true },
+    where: { operatorId: { not: null }, status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } },
+    orderBy: { _count: { id: 'desc' } },
+    take: 6,
   });
+  const operatorIds = byOperator.map(o => o.operatorId!).filter(Boolean);
+  const operators = await db.user.findMany({
+    where: { id: { in: operatorIds } },
+    select: { id: true, name: true },
+  });
+  const operatorMap = Object.fromEntries(operators.map(o => [o.id, o.name]));
+  const operatorColors = ['#004B97', '#11BCEC', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const operatorData = byOperator.map((o, i) => ({
+    label: operatorMap[o.operatorId!] ?? 'Sconosciuto',
+    value: o._count.id,
+    color: operatorColors[i % operatorColors.length],
+  }));
 
-  // Retrieve actual startup metrics
-  const totalOpenStartups = await db.startupActivity.count({
-    where: {
-      status: {
-        in: ['NUOVO', 'IN_LAVORAZIONE'],
-      },
-    },
+  const dateStr = new Date().toLocaleDateString('it-IT', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
   return (
-    <main className="flex-grow p-6 md:p-12 flex flex-col justify-between font-sans bg-[#F5F0EB]">
-      {/* Page Content */}
-      <div className="max-w-5xl w-full mx-auto space-y-8">
-        
-        {/* Breadcrumb & Greetings */}
-        <div className="flex justify-between items-center border-b border-black/10 pb-4">
-          <div className="font-mono text-xs text-gray-500 uppercase tracking-widest">
-            <span>Dashboard</span>
-            <span className="mx-2">&bull;</span>
-            <span className="text-[#004B97] font-bold">Home</span>
-          </div>
-          <span className="text-xs font-mono text-gray-400">
-            {new Date().toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </span>
-        </div>
+    <main className="flex-grow p-6 md:p-10 font-sans bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* Welcome Section */}
-        <div className="bg-white border border-black/10 p-8 rounded-2xl shadow-xs">
-          <span className="text-xs font-mono text-[#004B97] uppercase tracking-widest block mb-2">
-            [ PANNELLO DI CONTROLLO ]
-          </span>
-          <h2 className="text-2xl font-black uppercase text-black tracking-tight mb-4">
-            Benvenuto, {user.name}
-          </h2>
-          <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
-            Qui puoi monitorare lo stato di avanzamento dei ticket di assistenza IT logistica, inoltrare nuove segnalazioni tecniche o seguire lo stato di avanzamento delle attività di Start Up per i nuovi clienti dello stabilimento.
-          </p>
-        </div>
-
-        {/* Quick Metrics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs uppercase">
-          
-          {/* Card 1 */}
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#11BCEC] rounded-xl py-5 px-5 flex flex-col justify-between min-h-[110px] hover:border-black/20 hover:shadow-xs transition-all">
-            <div className="text-gray-500 font-bold mb-1 tracking-wider">
-              TUTTI I TICKET IN CORSO
-            </div>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-black tracking-tight">{totalOpenTickets}</span>
-              <span className="text-[9px] bg-[#11BCEC]/10 text-[#004B97] px-1.5 py-0.5 rounded font-bold">ATTIVI</span>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#3B82F6] rounded-xl py-5 px-5 flex flex-col justify-between min-h-[110px] hover:border-black/20 hover:shadow-xs transition-all">
-            <div className="text-gray-500 font-bold mb-1 tracking-wider">
-              TICKET IN TRIAGE (NUOVI)
-            </div>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className={`text-3xl font-extrabold tracking-tight ${triageCount > 0 ? 'text-blue-600' : 'text-black'}`}>{triageCount}</span>
-              <span className="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">DA FARE</span>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#10B981] rounded-xl py-5 px-5 flex flex-col justify-between min-h-[110px] hover:border-black/20 hover:shadow-xs transition-all">
-            <div className="text-gray-500 font-bold mb-1 tracking-wider">
-              TICKET IN CARICO A ME
-            </div>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-black tracking-tight">{myTicketsCount}</span>
-              <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">ASSEGNATI</span>
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div className="bg-white border border-black/10 border-l-4 border-l-amber-500 rounded-xl py-5 px-5 flex flex-col justify-between min-h-[110px] hover:border-black/20 hover:shadow-xs transition-all">
-            <div className="text-gray-500 font-bold mb-1 tracking-wider">
-              STARTUP IN CORSO
-            </div>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-black tracking-tight">{totalOpenStartups}</span>
-              <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">START UP</span>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Quick Actions Box */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-6 bg-white border border-black/10 rounded-xl gap-4 shadow-xs">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-bold text-black uppercase">[ AZIONI RAPIDE DI NAVIGAZIONE ]</h4>
-            <p className="text-xs text-gray-500 mt-1 font-sans">
-              Seleziona una delle sezioni operative del portale per iniziare a lavorare.
-            </p>
+            <p className="text-xs font-mono text-[#004B97] uppercase tracking-widest mb-1">Dashboard</p>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Benvenuto, {user.name}</h1>
+            <p className="text-sm text-gray-400 mt-0.5 capitalize">{dateStr}</p>
           </div>
-          <div className="flex flex-wrap gap-3 shrink-0">
-            <Link
-              href="/dashboard/tickets"
-              className="bg-white hover:bg-gray-50 text-black font-mono text-xs font-bold uppercase px-5 py-3 border border-black/10 rounded-lg text-center transition-all shadow-xs"
-            >
-              VAI AI TICKET &rarr;
+          <div className="flex gap-3">
+            <Link href="/dashboard/tickets" className="flex items-center gap-2 border border-black/10 text-gray-700 font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors shadow-xs">
+              Vai ai Ticket →
             </Link>
-            <Link
-              href="/dashboard/startup"
-              className="bg-[#11BCEC] hover:bg-[#004B97] text-white font-mono text-xs font-bold uppercase px-5 py-3 rounded-lg text-center transition-all shadow-xs"
-            >
-              VAI ALLE START UP &rarr;
+            <Link href="/dashboard/startup" className="flex items-center gap-2 bg-[#004B97] hover:bg-[#003a75] text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors shadow-sm">
+              Start Up →
             </Link>
           </div>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <KpiCard label="Ticket Aperti" value={totalOpen} tag="Attivi" color="#11BCEC" tagColor="#0369a1" />
+          <KpiCard label="In Triage" value={triageCount} tag="Nuovi" color="#3B82F6" tagColor="#1d4ed8" />
+          <KpiCard label="Miei Ticket" value={myTickets} tag="Assegnati" color="#10B981" tagColor="#059669" />
+          <KpiCard label="Risolti" value={resolved} tag="Totale" color="#6B7280" tagColor="#374151" />
+          <KpiCard label="Startup" value={openStartups} tag="In corso" color="#F59E0B" tagColor="#b45309" />
+        </div>
+
+        {/* Charts row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Donut — per categoria */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 shadow-xs">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-5">Ticket per Categoria</h3>
+            <DonutChart data={categoryData} />
+          </div>
+
+          {/* Donut — per stato */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 shadow-xs">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-5">Ticket per Stato</h3>
+            <DonutChart data={statusData} />
+          </div>
+
+          {/* Bar chart — per operatore */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 shadow-xs">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-5">Ticket per Operatore</h3>
+            <BarChart data={operatorData} />
+          </div>
+
         </div>
 
       </div>
-
-      {/* Footer */}
-      <footer className="border-t border-black/10 pt-6 mt-12 flex flex-col md:flex-row justify-between items-center font-mono text-xs text-gray-400 uppercase gap-2">
-        <div>SISTEMA TICKET INTERNI LOGISTICA UNO EUROPE SRL</div>
-        <div>STABILIMENTO LOCALE // 2026</div>
-      </footer>
     </main>
   );
 }

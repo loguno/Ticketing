@@ -14,8 +14,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Accesso negato.' }, { status: 403 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const typeParam = searchParams.get('type') || 'STARTUP';
+
   try {
     const startups = await db.startupActivity.findMany({
+      where: {
+        boardType: typeParam as import('@prisma/client').BoardType,
+      },
       orderBy: {
         createdAt: 'desc',
       },
@@ -64,12 +70,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, clientProject, startDate, targetCompleteDate, subactivities } = body as {
+    const { title, description, clientProject, startDate, targetCompleteDate, boardType, subactivities } = body as {
       title: string;
       description?: string;
       clientProject?: string;
       startDate?: string;
       targetCompleteDate?: string;
+      boardType?: import('@prisma/client').BoardType;
       subactivities?: SubactivityInput[];
     };
 
@@ -89,6 +96,7 @@ export async function POST(request: Request) {
         startDate: startDate ? new Date(startDate) : null,
         targetCompleteDate: targetCompleteDate ? new Date(targetCompleteDate) : null,
         status: 'NUOVO',
+        boardType: boardType || 'STARTUP',
         subactivities: {
           create: subactivities?.map((sub: SubactivityInput) => ({
             title: sub.title,
@@ -122,10 +130,11 @@ export async function POST(request: Request) {
       const endDateStr = targetCompleteDate ? new Date(targetCompleteDate).toLocaleDateString('it-IT') : 'Non definita';
       const subactivitiesList = startup.subactivities.map(s => `- ${s.title} (Resp: ${s.responsible?.name || 'Non assegnato'})`).join('\n');
 
+      const boardLabel = boardType || 'STARTUP';
       sendStartupEmail({
         to: targetEmail,
-        subject: `[STARTUP-NEW] Inserimento Attività: ${title}`,
-        bodyText: `È stata registrata una nuova attività di Start Up nel sistema.
+        subject: `[${boardLabel}-NEW] Inserimento Attività: ${title}`,
+        bodyText: `È stata registrata una nuova attività di ${boardLabel} nel sistema.
 
 DETTAGLI:
 ------------------------------------------
@@ -140,7 +149,7 @@ SOTTO-ATTIVITÀ CONFIGURATE:
 ${subactivitiesList || 'Nessuna sotto-attività configurata'}
 `,
         bodyHtml: `
-          <p>È stata registrata una nuova attività di <strong>Start Up</strong> nel sistema.</p>
+          <p>È stata registrata una nuova attività di <strong>${boardLabel}</strong> nel sistema.</p>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
           <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <tr>

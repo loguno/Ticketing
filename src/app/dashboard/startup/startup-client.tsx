@@ -34,7 +34,7 @@ interface StartupActivity {
   clientProject: string | null;
   startDate: string | null;
   targetCompleteDate: string | null;
-  status: 'NUOVO' | 'IN_LAVORAZIONE' | 'CONCLUSO';
+  status: 'NUOVO' | 'IN_LAVORAZIONE' | 'CONCLUSO' | 'SOSPESO' | 'ANNULLATO';
   createdAt: string;
   subactivities: Subactivity[];
 }
@@ -42,12 +42,13 @@ interface StartupActivity {
 interface StartupClientProps {
   user: UserInfo;
   allUsers: UserInfo[];
+  boardType?: 'STARTUP' | 'TMS' | 'WMS' | 'CROSS_DOCKING';
+  title?: string;
 }
 
-export default function StartupClient({ user, allUsers }: StartupClientProps) {
+export default function StartupClient({ user, allUsers, boardType = 'STARTUP', title = 'Start Up IT' }: StartupClientProps) {
   const [startups, setStartups] = useState<StartupActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedSubactivity, setSelectedSubactivity] = useState<Subactivity | null>(null);
   
@@ -64,7 +65,7 @@ export default function StartupClient({ user, allUsers }: StartupClientProps) {
   const fetchStartups = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/startup');
+      const res = await fetch(`/api/startup?type=${boardType}`);
       if (!res.ok) throw new Error('Errore durante il caricamento dei dati.');
       const data = await res.json();
       setStartups(data.startups || []);
@@ -73,7 +74,7 @@ export default function StartupClient({ user, allUsers }: StartupClientProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [boardType]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -170,96 +171,127 @@ export default function StartupClient({ user, allUsers }: StartupClientProps) {
 
   // Kanban Columns
   const columns: { id: StartupActivity['status']; title: string; color: string; bg: string; border: string }[] = [
-    { id: 'NUOVO', title: 'Da avviare (Nuovo)', color: 'text-blue-700', bg: 'bg-blue-500/5', border: 'border-blue-500/20 bg-blue-50/40' },
-    { id: 'IN_LAVORAZIONE', title: 'In Corso (Lavorazione)', color: 'text-[#C94E03]', bg: 'bg-[#E85D04]/5', border: 'border-[#E85D04]/20 bg-amber-50/40' },
-    { id: 'CONCLUSO', title: 'Completato (Concluso)', color: 'text-emerald-700', bg: 'bg-emerald-500/5', border: 'border-emerald-500/20 bg-emerald-50/40' },
+    { id: 'NUOVO', title: 'Da Avviare', color: 'text-blue-700', bg: 'bg-blue-500/5', border: 'border-blue-500/20 bg-blue-50/40' },
+    { id: 'IN_LAVORAZIONE', title: 'In Corso', color: 'text-[#C94E03]', bg: 'bg-[#E85D04]/5', border: 'border-[#E85D04]/20 bg-amber-50/40' },
+    { id: 'SOSPESO', title: 'Sospeso', color: 'text-slate-650', bg: 'bg-slate-500/5', border: 'border-slate-400/30 bg-slate-100/40' },
+    { id: 'CONCLUSO', title: 'Completato', color: 'text-emerald-700', bg: 'bg-emerald-500/5', border: 'border-emerald-500/20 bg-emerald-50/40' },
+    { id: 'ANNULLATO', title: 'Annullato', color: 'text-red-700', bg: 'bg-red-500/5', border: 'border-red-500/20 bg-red-50/40' },
   ];
 
   return (
-    <main className="flex-grow p-6 md:p-12 flex flex-col justify-between font-sans bg-[#F5F0EB]">
+    <main className="flex-grow p-6 md:p-10 font-sans bg-[#F8FAFC] min-h-screen">
       {/* Container */}
-      <div className="max-w-7xl w-full mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Breadcrumb Header */}
-        <div className="flex justify-between items-center border-b border-black/10 pb-4">
-          <div className="font-mono text-xs text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
-            <span>Dashboard</span>
-            <span className="text-gray-400">&bull;</span>
-            <span className="text-[#004B97] font-bold">Start Up IT</span>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-mono text-[#004B97] uppercase tracking-widest mb-1">Operativo</p>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">{title}</h1>
+            <p className="text-sm text-gray-500 mt-1">Gestione e avanzamento attività per {title}</p>
           </div>
-
           {user.role !== 'STANDARD' && (
             <button
+              id="btn-nuova-startup"
               onClick={() => setShowCreateModal(true)}
-              className="bg-[#11BCEC] hover:bg-[#004B97] text-white font-mono text-xs font-bold uppercase px-4 py-2.5 rounded-lg transition-all shadow-xs hover:shadow-sm cursor-pointer"
+              className="flex items-center gap-2 bg-[#004B97] hover:bg-[#003a75] text-white text-sm font-bold px-5 py-3 rounded-xl transition-all shadow-sm cursor-pointer"
             >
-              + Crea Start Up
+              + Crea Attività
             </button>
           )}
         </div>
 
         {/* Mockup-style KPI metrics cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs uppercase">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6 font-mono text-xs uppercase">
           
-          <div className="bg-white border border-black/10 border-l-4 border-l-gray-400 rounded-xl p-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">TOTALE PROGETTI</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">{startups.length}</span>
-              <span className="text-[9px] text-gray-400">TOTALI</span>
+          {/* Card 1: TOTALE PROGETTI */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-5 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#9ca3af' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">TOTALI</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">{startups.length}</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#9ca3af20', color: '#4b5563' }}>ATTIVITÀ</span>
             </div>
           </div>
-
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#3B82F6] rounded-xl p-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">DA AVVIARE</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">
+  
+          {/* Card 2: DA AVVIARE */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-5 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#3B82F6' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">DA AVVIARE</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">
                 {startups.filter((s) => s.status === 'NUOVO').length}
               </span>
-              <span className="text-[9px] text-blue-600 font-bold">NUOVI</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#3B82F620', color: '#1d4ed8' }}>NUOVI</span>
             </div>
           </div>
-
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#11BCEC] rounded-xl p-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">IN CORSO</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">
+  
+          {/* Card 3: IN CORSO */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-5 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#E85D04' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">IN CORSO</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">
                 {startups.filter((s) => s.status === 'IN_LAVORAZIONE').length}
               </span>
-              <span className="text-[9px] text-[#004B97] font-bold">ATTIVI</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#E85D0420', color: '#C94E03' }}>ATTIVI</span>
             </div>
           </div>
 
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#10B981] rounded-xl p-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">COMPLETATI</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">
+          {/* Card 4: SOSPESI */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-5 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#64748b' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">SOSPESI</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">
+                {startups.filter((s) => s.status === 'SOSPESO').length}
+              </span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#64748b20', color: '#475569' }}>STOP</span>
+            </div>
+          </div>
+  
+          {/* Card 5: COMPLETATI */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-5 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#10B981' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">COMPLETATI</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">
                 {startups.filter((s) => s.status === 'CONCLUSO').length}
               </span>
-              <span className="text-[9px] text-emerald-600 font-bold">CONCLUSI</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#10B98120', color: '#059669' }}>FINE</span>
             </div>
           </div>
 
         </div>
 
         {/* Filters and Views Bar */}
-        <div className="my-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 font-mono text-xs">
-          <div className="flex flex-wrap items-center gap-3 flex-grow">
-            {/* Search Input */}
+        <div className="bg-white/80 backdrop-blur-md border border-black/10 rounded-xl p-4 gap-4 flex flex-col md:flex-row md:flex-wrap items-stretch md:items-end text-xs font-mono text-black shadow-sm">
+          {/* Search Input */}
+          <div className="flex-grow min-w-[200px]">
+            <label className="block text-gray-400 uppercase tracking-widest text-[9px] mb-1.5">[ CERCA ]</label>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cerca attività, cliente o descrizione..."
-              className="bg-white border border-black/10 rounded-lg px-4 py-2 text-black placeholder-gray-400 focus:outline-none focus:border-[#11BCEC] transition-all min-w-[240px] flex-grow sm:flex-grow-0"
+              className="w-full bg-white border border-black/10 rounded-lg px-3 py-2 text-black placeholder-gray-400 focus:outline-none focus:border-[#11BCEC] transition-all"
             />
+          </div>
 
-            {/* Client Filter Dropdown */}
+          {/* Client Filter Dropdown */}
+          <div className="w-full md:w-[220px] shrink-0">
+            <label className="block text-gray-400 uppercase tracking-widest text-[9px] mb-1.5">[ CLIENTE / PROGETTO ]</label>
             <select
               value={clientFilter}
               onChange={(e) => setClientFilter(e.target.value)}
-              className="bg-white border border-black/10 rounded-lg px-3 py-2 text-black focus:outline-none focus:border-[#11BCEC] transition-all cursor-pointer"
+              className="w-full bg-white border border-black/10 rounded-lg px-3 py-2 text-black focus:outline-none focus:border-[#11BCEC] transition-all cursor-pointer"
             >
-              <option value="">Tutti i Clienti/Progetti</option>
+              <option value="">Tutti</option>
               {uniqueClients.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -268,25 +300,6 @@ export default function StartupClient({ user, allUsers }: StartupClientProps) {
             </select>
           </div>
 
-          {/* View Mode Switcher */}
-          <div className="flex bg-white border border-black/10 p-1 rounded-lg self-end sm:self-auto uppercase tracking-wide">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
-                viewMode === 'kanban' ? 'bg-[#11BCEC] text-white font-bold' : 'text-gray-500 hover:text-black'
-              }`}
-            >
-              Kanban
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
-                viewMode === 'list' ? 'bg-[#11BCEC] text-white font-bold' : 'text-gray-500 hover:text-black'
-              }`}
-            >
-              Tabella
-            </button>
-          </div>
         </div>
 
         {/* Main Board Area */}
@@ -300,141 +313,181 @@ export default function StartupClient({ user, allUsers }: StartupClientProps) {
             <div className="p-20 text-center border border-dashed border-black/10 rounded-xl text-xs font-mono text-gray-450 uppercase">
               [ NESSUNA ATTIVITÀ DI STARTUP CORRISPONDENTE ]
             </div>
-          ) : viewMode === 'kanban' ? (
+          ) : (
             /* KANBAN BOARD VIEW */
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
               {columns.map((col) => {
                 const columnActivities = filteredStartups.filter((s) => s.status === col.id);
                 return (
-                  <div key={col.id} className="flex flex-col space-y-4 min-w-0">
+                  <div key={col.id} className="flex flex-col bg-slate-50/50 border border-black/[0.03] rounded-2xl p-3 min-w-0 shadow-xs min-h-[500px]">
                     {/* Column Header */}
-                    <div className={`p-4 rounded-xl border ${col.border} flex justify-between items-center font-mono text-xs uppercase shadow-xs`}>
-                      <span className={`font-bold ${col.color}`}>{col.title}</span>
-                      <span className="bg-black/5 border border-black/10 px-2 py-0.5 rounded text-gray-500">
+                    <div className="flex justify-between items-center py-2.5 px-3 bg-white border border-black/[0.05] rounded-xl font-sans text-xs shadow-xs mb-4">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${
+                          col.id === 'NUOVO' ? 'bg-blue-500' :
+                          col.id === 'IN_LAVORAZIONE' ? 'bg-amber-500' :
+                          col.id === 'SOSPESO' ? 'bg-slate-400' :
+                          col.id === 'CONCLUSO' ? 'bg-emerald-500' :
+                          'bg-red-500'
+                        }`} />
+                        <span className="font-extrabold text-gray-800 tracking-tight text-xs leading-tight">{col.title}</span>
+                      </div>
+                      <span className="bg-slate-100 font-mono font-bold px-2.5 py-0.5 rounded-lg text-slate-500 text-[10px] shrink-0">
                         {columnActivities.length}
                       </span>
                     </div>
 
                     {/* Column Cards */}
-                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                    <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-1 flex-grow">
                       {columnActivities.map((startup) => {
                         const progress = getProgress(startup);
                         return (
                           <div
                             key={startup.id}
-                            className="bg-white border border-black/10 hover:border-black/15 p-5 rounded-xl space-y-4 transition-all relative group shadow-xs"
+                            className="bg-white border border-black/[0.06] hover:border-black/[0.1] hover:shadow-md p-5 rounded-2xl space-y-4 transition-all relative group shadow-xs flex flex-col justify-between"
                           >
-                            {/* Card Title & Delete */}
-                            <div className="flex justify-between items-start gap-2">
-                              <div className="min-w-0 flex-1">
-                                {startup.clientProject && (
-                                  <span className="inline-block bg-black/5 border border-black/10 rounded px-2 py-0.5 text-[9px] font-mono text-gray-500 uppercase mb-1 truncate max-w-full">
-                                    {startup.clientProject}
-                                  </span>
+                            <div className="space-y-3">
+                              {/* Header Card: Client Project & Delete */}
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="min-w-0 flex-1">
+                                  {startup.clientProject && (
+                                    <span className="inline-block bg-slate-100 text-slate-700 rounded-lg px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider mb-1 truncate max-w-full">
+                                      {startup.clientProject}
+                                    </span>
+                                  )}
+                                  <h3 className="text-sm font-extrabold text-gray-900 font-sans tracking-tight group-hover:text-[#004B97] transition-colors leading-snug break-words">
+                                    {startup.title}
+                                  </h3>
+                                </div>
+                                
+                                {user.role !== 'STANDARD' && (
+                                  <button
+                                    onClick={() => handleMacroDelete(startup.id)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer shrink-0"
+                                    title="Elimina startup"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                  </button>
                                 )}
-                                <h3 className="text-sm font-bold text-black font-sans tracking-tight group-hover:text-[#004B97] transition-colors leading-tight truncate">
-                                  {startup.title}
-                                </h3>
                               </div>
-                              
-                              {user.role !== 'STANDARD' && (
-                                <button
-                                  onClick={() => handleMacroDelete(startup.id)}
-                                  className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer shrink-0"
-                                  title="Elimina startup"
-                                >
-                                  <svg xmlns="http://www.w3.org/2500/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                </button>
+
+                              {/* Description */}
+                              {startup.description && (
+                                <p className="text-xs text-gray-500 leading-relaxed font-sans line-clamp-2 break-words">
+                                  {startup.description}
+                                </p>
                               )}
-                            </div>
 
-                            {/* Description */}
-                            {startup.description && (
-                              <p className="text-xs text-gray-650 leading-relaxed font-sans line-clamp-2 break-words">
-                                {startup.description}
-                              </p>
-                            )}
-
-                            {/* Date Range */}
-                            <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400">
-                              <span>DAL: {startup.startDate ? new Date(startup.startDate).toLocaleDateString('it-IT') : 'N/D'}</span>
-                              <span>&bull;</span>
-                              <span>AL: {startup.targetCompleteDate ? new Date(startup.targetCompleteDate).toLocaleDateString('it-IT') : 'N/D'}</span>
-                            </div>
-
-                            {/* Progress bar */}
-                            <div className="space-y-1.5 font-mono text-[10px]">
-                              <div className="flex justify-between items-center text-gray-400">
-                                <span>PROGRESSO AVANZAMENTO</span>
-                                <span className="font-bold text-[#11BCEC]">{progress}%</span>
+                              {/* Dates */}
+                              <div className="flex items-center gap-2 text-[10px] font-sans text-gray-400 bg-slate-50 border border-black/[0.03] rounded-lg p-2.5 w-fit">
+                                <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                  <line x1="16" y1="2" x2="16" y2="6" />
+                                  <line x1="8" y1="2" x2="8" y2="6" />
+                                  <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                                <span className="font-semibold text-gray-600">
+                                  {startup.startDate ? new Date(startup.startDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : 'N/D'}
+                                </span>
+                                <span>→</span>
+                                <span className="font-semibold text-[#004B97]">
+                                  {startup.targetCompleteDate ? new Date(startup.targetCompleteDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/D'}
+                                </span>
                               </div>
-                              <div className="w-full bg-black/5 rounded-full h-1.5 overflow-hidden">
-                                <div className="bg-[#11BCEC] h-full rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+
+                              {/* Progress bar */}
+                              <div className="space-y-1.5 font-sans text-[10px] bg-slate-50 border border-black/[0.03] rounded-lg p-2.5">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-gray-500 tracking-wider">AVANZAMENTO</span>
+                                  <span className="font-black text-[#004B97]">{progress}%</span>
+                                </div>
+                                <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                  <div className="bg-gradient-to-r from-[#11BCEC] to-[#004B97] h-full rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                                </div>
                               </div>
                             </div>
 
                             {/* Subactivities Preview List */}
-                            <div className="border-t border-black/5 pt-3 space-y-2">
-                              <div className="flex justify-between items-center font-mono text-[9px] text-gray-400 uppercase tracking-wide">
+                            <div className="border-t border-black/[0.05] pt-3.5 space-y-2">
+                              <div className="flex justify-between items-center font-sans text-[10px] text-gray-500 uppercase tracking-wider font-bold">
                                 <span>Sotto-attività ({startup.subactivities.length})</span>
                                 {user.role !== 'STANDARD' && (
                                   <button
                                     onClick={() => setAddingSubactivityToId(startup.id)}
-                                    className="text-[#11BCEC] hover:text-[#004B97] font-bold cursor-pointer"
+                                    className="text-[#11BCEC] hover:text-[#004B97] font-extrabold cursor-pointer text-[9px] uppercase tracking-widest"
                                   >
-                                    + AGGIUNGI
+                                    + Aggiungi
                                   </button>
                                 )}
                               </div>
 
                               {/* Subactivities items list */}
-                              <div className="space-y-1.5">
-                                {startup.subactivities.map((sub) => {
-                                  const subCol = {
-                                    DA_FARE: 'bg-red-50 text-red-700 border-red-200/50',
-                                    IN_CORSO: 'bg-blue-50 text-blue-700 border-blue-200/50',
-                                    COMPLETATA: 'bg-emerald-50 text-emerald-700 border-emerald-200/50',
-                                  }[sub.status];
+                              <div className="space-y-1.5 max-h-[200px] overflow-y-auto px-0.5 py-0.5">
+                                {startup.subactivities.map((sub) => (
+                                  <div
+                                    key={sub.id}
+                                    onClick={() => setSelectedSubactivity(sub)}
+                                    className="bg-white hover:bg-gray-50 border border-black/[0.05] rounded-lg px-3 py-2 flex items-start gap-2 cursor-pointer group/item transition-all hover:shadow-xs"
+                                  >
+                                    {/* Icona di stato */}
+                                    <span className="shrink-0 mt-0.5">
+                                      {sub.status === 'COMPLETATA' ? (
+                                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                      ) : sub.status === 'IN_CORSO' ? (
+                                        <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                          <circle cx="12" cy="12" r="9" />
+                                          <path d="M12 6v6l4 2" />
+                                        </svg>
+                                      ) : (
+                                        <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                          <circle cx="12" cy="12" r="9" />
+                                        </svg>
+                                      )}
+                                    </span>
 
-                                  return (
-                                    <div
-                                      key={sub.id}
-                                      onClick={() => setSelectedSubactivity(sub)}
-                                      className="bg-gray-50/50 hover:bg-gray-100 border border-black/5 rounded px-2.5 py-1.5 flex justify-between items-center text-[10px] cursor-pointer group/item transition-colors min-w-0 gap-2"
-                                    >
-                                      <div className="min-w-0 flex-1">
-                                        <span className="text-gray-800 font-sans group-hover/item:text-[#004B97] transition-colors font-medium block truncate">
-                                          {sub.title}
-                                        </span>
-                                        {sub.responsible && (
-                                          <span className="block text-[8px] text-gray-400 font-mono truncate">
-                                            RESP: {sub.responsible.name}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase shrink-0 border ${subCol}`}>
-                                        {sub.status === 'DA_FARE' ? 'Da fare' : sub.status === 'IN_CORSO' ? 'In corso' : 'Completata'}
-                                      </span>
+                                    {/* Testo */}
+                                    <div className="min-w-0 flex-1 overflow-hidden">
+                                      <p className="text-[11px] font-semibold text-gray-800 group-hover/item:text-[#004B97] leading-snug line-clamp-2 transition-colors">
+                                        {sub.title}
+                                      </p>
+                                      {sub.responsible && (
+                                        <p className="text-[9px] text-gray-400 font-mono mt-0.5 truncate uppercase">
+                                          {sub.responsible.name}
+                                        </p>
+                                      )}
                                     </div>
-                                  );
-                                })}
+
+                                    {/* Micro badge stato */}
+                                    <span className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase ${
+                                      sub.status === 'DA_FARE' ? 'bg-red-50 text-red-600' :
+                                      sub.status === 'IN_CORSO' ? 'bg-amber-50 text-amber-700' :
+                                      'bg-emerald-50 text-emerald-700'
+                                    }`}>
+                                      {sub.status === 'DA_FARE' ? '●' : sub.status === 'IN_CORSO' ? '●' : '●'}
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
                             </div>
 
                             {/* Quick Status Mover Dropdown */}
                             {user.role !== 'STANDARD' && (
-                              <div className="border-t border-black/5 pt-3 flex justify-between items-center font-mono text-[9px]">
-                                <span className="text-gray-400 uppercase">CAMBIA STATO MACRO</span>
+                              <div className="border-t border-black/[0.05] pt-3 mt-3 flex justify-between items-center text-[10px] font-sans">
+                                <span className="text-gray-400 font-bold tracking-wider uppercase">Stato</span>
                                 <select
                                   value={startup.status}
                                   onChange={(e) => handleMacroStatusChange(startup.id, e.target.value as StartupActivity['status'])}
-                                  className="bg-white border border-black/10 rounded px-1.5 py-1 text-black focus:outline-none cursor-pointer"
+                                  className="bg-slate-50 hover:bg-slate-100 border border-black/10 rounded-lg px-2.5 py-1 text-black font-semibold focus:outline-none focus:ring-2 focus:ring-[#11BCEC]/30 focus:border-[#11BCEC] transition-all cursor-pointer text-[10px]"
                                 >
                                   <option value="NUOVO">Nuovo</option>
                                   <option value="IN_LAVORAZIONE">In Corso</option>
+                                  <option value="SOSPESO">Sospeso</option>
                                   <option value="CONCLUSO">Concluso</option>
+                                  <option value="ANNULLATO">Annullato</option>
                                 </select>
                               </div>
                             )}
@@ -445,66 +498,6 @@ export default function StartupClient({ user, allUsers }: StartupClientProps) {
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            /* TABELLARE / LIST VIEW GROUPED BY CLIENT */
-            <div className="bg-white border border-black/10 rounded-xl overflow-hidden font-mono text-xs shadow-xs">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-black">
-                  <thead>
-                    <tr className="border-b border-black/15 text-gray-500 uppercase tracking-wider bg-gray-50/75">
-                      <th className="p-4">[ PROGETTO / CLIENTE ]</th>
-                      <th className="p-4">[ ATTIVITÀ ]</th>
-                      <th className="p-4">[ STATO ]</th>
-                      <th className="p-4">[ PROGRESSO ]</th>
-                      <th className="p-4">[ DATA INIZIO ]</th>
-                      <th className="p-4">[ SCADENZA ]</th>
-                      <th className="p-4">[ SOTTO-ATTIVITÀ ]</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-black/5 text-gray-800">
-                    {filteredStartups.map((startup) => {
-                      const progress = getProgress(startup);
-                      return (
-                        <tr key={startup.id} className="hover:bg-black/[0.015] transition-colors">
-                          <td className="p-4 font-bold text-gray-650 uppercase">
-                            {startup.clientProject || '[ Nessuno ]'}
-                          </td>
-                          <td className="p-4 text-black font-sans font-bold">
-                            {startup.title}
-                          </td>
-                          <td className="p-4">
-                            <span className={`px-2 py-0.5 border rounded text-[10px] font-bold uppercase ${
-                              startup.status === 'NUOVO' ? 'border-blue-200 text-blue-700 bg-blue-50' :
-                              startup.status === 'IN_LAVORAZIONE' ? 'border-orange-200 text-[#C94E03] bg-orange-50' :
-                              'border-emerald-200 text-emerald-700 bg-emerald-50'
-                            }`}>
-                              {startup.status === 'NUOVO' ? 'Nuovo' : startup.status === 'IN_LAVORAZIONE' ? 'In corso' : 'Concluso'}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-[#11BCEC]">{progress}%</span>
-                              <div className="w-16 bg-black/5 rounded-full h-1.5 overflow-hidden shrink-0">
-                                <div className="bg-[#11BCEC] h-full" style={{ width: `${progress}%` }}></div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4 text-gray-500">
-                            {startup.startDate ? new Date(startup.startDate).toLocaleDateString('it-IT') : '-'}
-                          </td>
-                          <td className="p-4 text-gray-500">
-                            {startup.targetCompleteDate ? new Date(startup.targetCompleteDate).toLocaleDateString('it-IT') : '-'}
-                          </td>
-                          <td className="p-4 font-bold text-[#004B97]">
-                            <span>{startup.subactivities.length} definite</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
         </div>
@@ -587,6 +580,7 @@ export default function StartupClient({ user, allUsers }: StartupClientProps) {
           <div className="w-full max-w-2xl bg-white border border-black/10 rounded-xl overflow-hidden shadow-xl">
             <StartupForm
               allUsers={allUsers}
+              boardType={boardType}
               onSuccess={() => {
                 setShowCreateModal(false);
                 fetchStartups();

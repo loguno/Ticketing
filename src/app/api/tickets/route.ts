@@ -20,6 +20,7 @@ export async function GET(request: Request) {
   const priority = searchParams.get('priority');
   const category = searchParams.get('category');
   const search = searchParams.get('search');
+  const isSuggestion = searchParams.get('isSuggestion');
 
   try {
     const andConditions: import('@prisma/client').Prisma.TicketWhereInput[] = [];
@@ -47,6 +48,11 @@ export async function GET(request: Request) {
     }
     if (category) {
       andConditions.push({ category: category as TicketCategory });
+    }
+    if (isSuggestion === 'true') {
+      andConditions.push({ isSuggestion: true });
+    } else if (isSuggestion === 'false') {
+      andConditions.push({ isSuggestion: false });
     }
     if (search) {
       andConditions.push({

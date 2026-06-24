@@ -17,11 +17,12 @@ interface Ticket {
   ticketNumber: string;
   title: string;
   description: string;
-  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO';
+  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
   priority: 'BASSA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
   contact: string;
+  isSuggestion?: boolean;
   createdAt: string;
   creator?: { name: string; email: string };
   operator?: { name: string; email: string };
@@ -100,6 +101,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
       CHIUSO: 'Chiuso',
       NON_RISOLVIBILE: 'Non Risolvibile',
       ANNULLATO: 'Annullato',
+      SOSPESO: 'Sospeso',
     };
     return labels[status] || status;
   };
@@ -112,6 +114,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
       CHIUSO: 'bg-gray-50 text-gray-600 border-gray-200',
       NON_RISOLVIBILE: 'bg-gray-100 text-gray-500 border-gray-300',
       ANNULLATO: 'bg-red-50 text-red-700 border-red-200/50',
+      SOSPESO: 'bg-slate-50 text-slate-700 border-slate-200',
     };
     return styles[status] || 'bg-gray-50 text-gray-600 border-gray-200';
   };
@@ -137,21 +140,21 @@ export default function TicketsClient({ user }: TicketsClientProps) {
   };
 
   return (
-    <main className="flex-grow p-6 md:p-12 flex flex-col justify-between font-sans bg-[#F5F0EB]">
+    <main className="flex-grow p-6 md:p-10 font-sans bg-[#F8FAFC] min-h-screen">
       {/* Container */}
-      <div className="max-w-7xl w-full mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Breadcrumb Header */}
-        <div className="flex justify-between items-center border-b border-black/10 pb-4">
-          <div className="font-mono text-xs text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
-            <span>Dashboard</span>
-            <span className="text-gray-400">&bull;</span>
-            <span className="text-[#004B97] font-bold">Ticket IT</span>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-mono text-[#004B97] uppercase tracking-widest mb-1">Operativo</p>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Ticket IT</h1>
+            <p className="text-sm text-gray-500 mt-1">Gestione e monitoraggio delle segnalazioni di assistenza</p>
           </div>
-
           <button
+            id="btn-nuovo-ticket"
             onClick={() => setShowCreateModal(true)}
-            className="bg-[#11BCEC] hover:bg-[#004B97] text-white font-mono text-xs font-bold uppercase px-4 py-2.5 rounded-lg transition-all shadow-xs hover:shadow-sm cursor-pointer"
+            className="flex items-center gap-2 bg-[#004B97] hover:bg-[#003a75] text-white text-sm font-bold px-5 py-3 rounded-xl transition-all shadow-sm cursor-pointer"
           >
             + Crea Ticket
           </button>
@@ -160,35 +163,47 @@ export default function TicketsClient({ user }: TicketsClientProps) {
         {/* Mockup-style KPI metrics cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs uppercase">
           
-          <div className="bg-white border border-black/10 border-l-4 border-l-gray-400 rounded-xl py-4 px-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">TUTTI I SEGNALATI</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">{tickets.length}</span>
-              <span className="text-[9px] text-gray-400">TOTALI</span>
+          {/* Card 1: TUTTI I SEGNALATI */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#9ca3af' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">TUTTI I SEGNALATI</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">{tickets.length}</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#9ca3af20', color: '#4b5563' }}>TOTALI</span>
             </div>
           </div>
-
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#3B82F6] rounded-xl py-4 px-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">BASKET TRIAGE</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">{triageCount}</span>
-              <span className="text-[9px] text-blue-600 font-bold">DA VALUTARE</span>
+ 
+          {/* Card 2: BASKET TRIAGE */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#3B82F6' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">BASKET TRIAGE</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">{triageCount}</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#3B82F620', color: '#1d4ed8' }}>DA VALUTARE</span>
             </div>
           </div>
-
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#11BCEC] rounded-xl py-4 px-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">TICKET IN CORSO</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">{openTicketsCount}</span>
-              <span className="text-[9px] text-[#004B97] font-bold">ATTIVI</span>
+ 
+          {/* Card 3: TICKET IN CORSO */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#11BCEC' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">TICKET IN CORSO</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">{openTicketsCount}</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#11BCEC20', color: '#004B97' }}>ATTIVI</span>
             </div>
           </div>
-
-          <div className="bg-white border border-black/10 border-l-4 border-l-[#EF4444] rounded-xl py-4 px-4 flex flex-col justify-between hover:border-black/20 hover:shadow-xs transition-all min-h-[90px]">
-            <span className="text-[10px] font-bold text-gray-500">PRIORITÀ CRITICA</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black text-black">{criticalTicketsCount}</span>
-              <span className="text-[9px] text-red-600 font-bold">URGENTI</span>
+ 
+          {/* Card 4: PRIORITÀ CRITICA */}
+          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
+            style={{ borderLeftColor: '#EF4444' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">PRIORITÀ CRITICA</span>
+            <div className="flex items-center justify-center gap-3 mt-3 w-full">
+              <span className="text-4xl font-black text-gray-900 tracking-tight">{criticalTicketsCount}</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
+                style={{ background: '#EF444420', color: '#dc2626' }}>URGENTI</span>
             </div>
           </div>
 
@@ -231,7 +246,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
           <TicketFilters onFilterChange={handleFilterChange} showStatusFilter={activeTab !== 'triage'} />
 
           {/* Table Container */}
-          <div className="bg-white border border-black/10 rounded-xl overflow-hidden shadow-xs">
+          <div className="bg-white border border-black/[0.07] rounded-2xl overflow-hidden shadow-xs">
             {isLoading ? (
               <div className="p-20 flex flex-col items-center justify-center gap-4 text-xs font-mono text-gray-450 uppercase">
                 <span className="h-6 w-6 border-2 border-[#11BCEC] border-t-transparent rounded-full animate-spin"></span>
@@ -268,7 +283,14 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                         </td>
                         <td className="p-4 max-w-[300px] truncate text-gray-800 font-sans font-medium">
                           <Link href={`/dashboard/tickets/${ticket.id}`} className="block">
-                            {ticket.title}
+                            <span className="flex items-center gap-1.5 truncate">
+                              {ticket.isSuggestion && (
+                                <span className="bg-[#11BCEC]/15 text-[#004B97] border border-[#11BCEC]/30 text-[9px] font-bold px-1.5 py-0.5 rounded-md font-mono shrink-0 select-none" title="Suggerimento / Nuova Idea">
+                                  💡 IDEA
+                                </span>
+                              )}
+                              <span className="truncate">{ticket.title}</span>
+                            </span>
                           </Link>
                         </td>
                         <td className="p-4">

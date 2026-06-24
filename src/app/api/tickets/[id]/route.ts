@@ -74,7 +74,7 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const { status, priority, category, operatorId, targetCloseDate, sendNotification } = body;
+    const { status, priority, category, operatorId, targetCloseDate, isSuggestion, sendNotification } = body;
 
     const oldTicket = await db.ticket.findUnique({
       where: { id },
@@ -90,6 +90,7 @@ export async function PATCH(
     if (status) updateData.status = status as TicketStatus;
     if (priority) updateData.priority = priority as TicketPriority;
     if (category) updateData.category = category as TicketCategory;
+    if (isSuggestion !== undefined) updateData.isSuggestion = isSuggestion;
     if (operatorId !== undefined) {
       updateData.operator = operatorId ? { connect: { id: operatorId } } : { disconnect: true };
     }
@@ -121,6 +122,11 @@ export async function PATCH(
     if (category && category !== oldTicket.category) {
       activityText += `Categoria modificata da ${oldTicket.category} a ${category}. `;
     }
+    if (isSuggestion !== undefined && isSuggestion !== oldTicket.isSuggestion) {
+      activityText += isSuggestion 
+        ? "Segnalato come Suggerimento/Nuova Idea. "
+        : "Rimosso flag Suggerimento/Nuova Idea. ";
+    }
     if (operatorId !== undefined && operatorId !== oldTicket.operatorId) {
       const newOpName = updatedTicket.operator ? updatedTicket.operator.name : 'Nessuno';
       activityText += `Operatore assegnato: ${newOpName}. `;
@@ -147,6 +153,7 @@ export async function PATCH(
         CHIUSO: 'Chiuso',
         NON_RISOLVIBILE: 'Non Risolvibile',
         ANNULLATO: 'Annullato',
+        SOSPESO: 'Sospeso',
       };
 
       const statusLabel = statusLabelMap[status as TicketStatus] || status;
