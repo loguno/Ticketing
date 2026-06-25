@@ -32,7 +32,7 @@ interface Ticket {
   ticketNumber: string;
   title: string;
   description: string;
-  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
+  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
   priority: 'BASSA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
@@ -554,6 +554,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                     >
                       <option value="NUOVO">Da valutare</option>
                       <option value="IN_VALUTAZIONE">In Valutazione</option>
+                      <option value="RISPOSTO">Risposto</option>
                       <option value="SOSPESO">Sospeso</option>
                       <option value="RISOLTO">Risolto</option>
                       <option value="CHIUSO">Chiuso</option>
@@ -691,13 +692,15 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                   <span className={`font-bold ${
                     ticket.status === 'NUOVO' ? 'text-blue-700' :
                     ticket.status === 'IN_VALUTAZIONE' ? 'text-[#C94E03]' :
+                    ticket.status === 'RISPOSTO' ? 'text-cyan-700' :
                     ticket.status === 'RISOLTO' ? 'text-emerald-700' :
                     ticket.status === 'SOSPESO' ? 'text-slate-650' :
-                    'text-gray-550'
+                    'text-gray-555'
                   }`}>
                     {{
                       NUOVO: 'Da valutare',
                       IN_VALUTAZIONE: 'In Valutazione',
+                      RISPOSTO: 'Risposto',
                       RISOLTO: 'Risolto',
                       CHIUSO: 'Chiuso',
                       NON_RISOLVIBILE: 'Non Risolvibile',

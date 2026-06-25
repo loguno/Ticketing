@@ -181,6 +181,14 @@ export async function POST(
       },
     });
 
+    // Update ticket status to RISPOSTO if an operator sends a public communication
+    if (type === 'USER_COMMUNICATION' && userRole !== 'STANDARD') {
+      await db.ticket.update({
+        where: { id },
+        data: { status: 'RISPOSTO' },
+      });
+    }
+
     // Notify user if it's a public communication sent by staff
     if (type === 'USER_COMMUNICATION' && userRole !== 'STANDARD' && sendNotification && ticket.contact) {
       sendTicketEmail({

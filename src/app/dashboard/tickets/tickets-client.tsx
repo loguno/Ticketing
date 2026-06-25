@@ -17,7 +17,7 @@ interface Ticket {
   ticketNumber: string;
   title: string;
   description: string;
-  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
+  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
   priority: 'BASSA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
@@ -47,13 +47,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
   const fetchTickets = useCallback(async () => {
     setIsLoading(true);
     try {
-      const queryParams = new URLSearchParams();
-      if (filters.status) queryParams.append('status', filters.status);
-      if (filters.priority) queryParams.append('priority', filters.priority);
-      if (filters.category) queryParams.append('category', filters.category);
-      if (filters.search) queryParams.append('search', filters.search);
-
-      const res = await fetch(`/api/tickets?${queryParams.toString()}`);
+      const res = await fetch(`/api/tickets`);
       if (!res.ok) throw new Error('Errore durante il recupero dei ticket.');
       const data = await res.json();
       setTickets(data.tickets || []);
@@ -62,7 +56,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,23 +74,51 @@ export default function TicketsClient({ user }: TicketsClientProps) {
     fetchTickets();
   }, [fetchTickets]);
 
-  // Filter list based on active tab
-  // Triage: status == 'NUOVO' and no operator assigned (or just NUOVO status)
+  // Filter list based on active tab and search filters client-side
   const displayedTickets = tickets.filter((ticket) => {
+    // 1. activeTab filtering (triage tab shows only NUOVO)
     if (activeTab === 'triage') {
       return ticket.status === 'NUOVO';
     }
+
+    // 2. filters.status
+    if (filters.status && ticket.status !== filters.status) {
+      return false;
+    }
+
+    // 3. filters.priority
+    if (filters.priority && ticket.priority !== filters.priority) {
+      return false;
+    }
+
+    // 4. filters.category
+    if (filters.category && ticket.category !== filters.category) {
+      return false;
+    }
+
+    // 5. filters.search
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchNumber = ticket.ticketNumber.toLowerCase().includes(searchLower);
+      const matchTitle = ticket.title.toLowerCase().includes(searchLower);
+      const matchDesc = ticket.description.toLowerCase().includes(searchLower);
+      if (!matchNumber && !matchTitle && !matchDesc) {
+        return false;
+      }
+    }
+
     return true;
   });
 
   const triageCount = tickets.filter((t) => t.status === 'NUOVO').length;
-  const openTicketsCount = tickets.filter((t) => t.status === 'NUOVO' || t.status === 'IN_VALUTAZIONE').length;
+  const openTicketsCount = tickets.filter((t) => t.status === 'NUOVO' || t.status === 'IN_VALUTAZIONE' || t.status === 'RISPOSTO' || t.status === 'SOSPESO').length;
   const criticalTicketsCount = tickets.filter((t) => t.priority === 'CRITICA' && t.status !== 'CHIUSO' && t.status !== 'ANNULLATO').length;
 
   const statusLabel = (status: Ticket['status']) => {
     const labels: Record<Ticket['status'], string> = {
       NUOVO: 'Da valutare',
       IN_VALUTAZIONE: 'In Valutazione',
+      RISPOSTO: 'Risposto',
       RISOLTO: 'Risolto',
       CHIUSO: 'Chiuso',
       NON_RISOLVIBILE: 'Non Risolvibile',
@@ -110,8 +132,9 @@ export default function TicketsClient({ user }: TicketsClientProps) {
     const styles: Record<Ticket['status'], string> = {
       NUOVO: 'bg-blue-50 text-blue-750 border-blue-200/50',
       IN_VALUTAZIONE: 'bg-[#E85D04]/5 text-[#C94E03] border-[#E85D04]/20',
+      RISPOSTO: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
       RISOLTO: 'bg-emerald-50 text-emerald-700 border-emerald-200/50',
-      CHIUSO: 'bg-gray-50 text-gray-600 border-gray-200',
+      CHIUSO: 'bg-gray-55 text-gray-600 border-gray-200',
       NON_RISOLVIBILE: 'bg-gray-100 text-gray-500 border-gray-300',
       ANNULLATO: 'bg-red-50 text-red-700 border-red-200/50',
       SOSPESO: 'bg-slate-50 text-slate-700 border-slate-200',

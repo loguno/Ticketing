@@ -53,10 +53,12 @@ export default function TicketFilters({ onFilterChange, showStatusFilter = true 
             <option value="">Tutti</option>
             <option value="NUOVO">Da valutare</option>
             <option value="IN_VALUTAZIONE">In Valutazione</option>
+            <option value="RISPOSTO">Risposto</option>
             <option value="RISOLTO">Risolto</option>
             <option value="CHIUSO">Chiuso</option>
             <option value="NON_RISOLVIBILE">Non Risolvibile</option>
             <option value="ANNULLATO">Annullato</option>
+            <option value="SOSPESO">Sospeso</option>
           </select>
         </div>
       )}

@@ -16,6 +16,7 @@ enum Role {
 enum TicketStatus {
   NUOVO
   IN_VALUTAZIONE
+  RISPOSTO
   RISOLTO
   CHIUSO
   NON_RISOLVIBILE
