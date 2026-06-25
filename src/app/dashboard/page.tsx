@@ -117,9 +117,9 @@ export default async function DashboardPage() {
 
   // --- KPI queries ---
   const [totalOpen, triageCount, myTickets, resolved, openStartups] = await Promise.all([
-    db.ticket.count({ where: { status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } } }),
+    db.ticket.count({ where: { status: { in: ['NUOVO', 'IN_VALUTAZIONE', 'IN_CARICO', 'RISPOSTO', 'SOSPESO'] } } }),
     db.ticket.count({ where: { status: 'NUOVO' } }),
-    db.ticket.count({ where: { operatorId: userId, status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } } }),
+    db.ticket.count({ where: { operatorId: userId, status: { in: ['NUOVO', 'IN_VALUTAZIONE', 'IN_CARICO', 'RISPOSTO', 'SOSPESO'] } } }),
     db.ticket.count({ where: { status: 'RISOLTO' } }),
     db.startupActivity.count({ where: { status: { in: ['NUOVO', 'IN_LAVORAZIONE'] } } }),
   ]);
@@ -128,7 +128,7 @@ export default async function DashboardPage() {
   const byCategory = await db.ticket.groupBy({
     by: ['category'],
     _count: { id: true },
-    where: { status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } },
+    where: { status: { in: ['NUOVO', 'IN_VALUTAZIONE', 'IN_CARICO', 'RISPOSTO', 'SOSPESO'] } },
   });
   const catColors: Record<string, string> = {
     TMS: '#11BCEC', WMS: '#004B97', AMMINISTRATIVO: '#10B981', ALTRO: '#F59E0B',
@@ -145,8 +145,9 @@ export default async function DashboardPage() {
     _count: { id: true },
   });
   const statusColors: Record<string, string> = {
-    NUOVO: '#3B82F6', IN_VALUTAZIONE: '#F59E0B', RISOLTO: '#10B981',
-    CHIUSO: '#6B7280', NON_RISOLVIBILE: '#EF4444', ANNULLATO: '#9CA3AF',
+    NUOVO: '#3B82F6', IN_VALUTAZIONE: '#F59E0B', IN_CARICO: '#D97706', RISPOSTO: '#11BCEC',
+    RISOLTO: '#10B981', CHIUSO: '#6B7280', NON_RISOLVIBILE: '#EF4444', ANNULLATO: '#9CA3AF',
+    SOSPESO: '#64748B',
   };
   const statusData = byStatus.map(s => ({
     label: s.status.replace('_', ' '),
@@ -158,7 +159,7 @@ export default async function DashboardPage() {
   const byOperator = await db.ticket.groupBy({
     by: ['operatorId'],
     _count: { id: true },
-    where: { operatorId: { not: null }, status: { in: ['NUOVO', 'IN_VALUTAZIONE'] } },
+    where: { operatorId: { not: null }, status: { in: ['NUOVO', 'IN_VALUTAZIONE', 'IN_CARICO', 'RISPOSTO', 'SOSPESO'] } },
     orderBy: { _count: { id: 'desc' } },
     take: 6,
   });

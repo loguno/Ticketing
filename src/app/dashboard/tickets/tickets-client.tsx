@@ -1,7 +1,8 @@
 'use client';
-
+ 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import TicketFilters from '@/components/ticket-filters';
 import TicketForm from '@/components/ticket-form';
 
@@ -17,7 +18,7 @@ interface Ticket {
   ticketNumber: string;
   title: string;
   description: string;
-  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
+  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'IN_CARICO' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
   priority: 'BASSA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
@@ -33,6 +34,7 @@ interface TicketsClientProps {
 }
 
 export default function TicketsClient({ user }: TicketsClientProps) {
+  const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'triage'>('all');
@@ -111,13 +113,14 @@ export default function TicketsClient({ user }: TicketsClientProps) {
   });
 
   const triageCount = tickets.filter((t) => t.status === 'NUOVO').length;
-  const openTicketsCount = tickets.filter((t) => t.status === 'NUOVO' || t.status === 'IN_VALUTAZIONE' || t.status === 'RISPOSTO' || t.status === 'SOSPESO').length;
+  const openTicketsCount = tickets.filter((t) => t.status === 'NUOVO' || t.status === 'IN_VALUTAZIONE' || t.status === 'IN_CARICO' || t.status === 'RISPOSTO' || t.status === 'SOSPESO').length;
   const criticalTicketsCount = tickets.filter((t) => t.priority === 'CRITICA' && t.status !== 'CHIUSO' && t.status !== 'ANNULLATO').length;
 
   const statusLabel = (status: Ticket['status']) => {
     const labels: Record<Ticket['status'], string> = {
       NUOVO: 'Da valutare',
       IN_VALUTAZIONE: 'In Valutazione',
+      IN_CARICO: 'In Carico',
       RISPOSTO: 'Risposto',
       RISOLTO: 'Risolto',
       CHIUSO: 'Chiuso',
@@ -132,9 +135,10 @@ export default function TicketsClient({ user }: TicketsClientProps) {
     const styles: Record<Ticket['status'], string> = {
       NUOVO: 'bg-blue-50 text-blue-750 border-blue-200/50',
       IN_VALUTAZIONE: 'bg-[#E85D04]/5 text-[#C94E03] border-[#E85D04]/20',
+      IN_CARICO: 'bg-amber-50 text-amber-800 border-amber-200/50',
       RISPOSTO: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
       RISOLTO: 'bg-emerald-50 text-emerald-700 border-emerald-200/50',
-      CHIUSO: 'bg-gray-55 text-gray-600 border-gray-200',
+      CHIUSO: 'bg-gray-55 text-gray-650 border-gray-200',
       NON_RISOLVIBILE: 'bg-gray-100 text-gray-500 border-gray-300',
       ANNULLATO: 'bg-red-50 text-red-700 border-red-200/50',
       SOSPESO: 'bg-slate-50 text-slate-700 border-slate-200',
@@ -304,7 +308,21 @@ export default function TicketsClient({ user }: TicketsClientProps) {
             </div>
           )}
 
-          <TicketFilters onFilterChange={handleFilterChange} showStatusFilter={activeTab !== 'triage'} />
+          <div className="flex flex-col md:flex-row md:items-end gap-4">
+            <div className="flex-grow">
+              <TicketFilters onFilterChange={handleFilterChange} showStatusFilter={activeTab !== 'triage'} />
+            </div>
+            <button
+              onClick={() => fetchTickets()}
+              className="bg-white hover:bg-gray-50 border border-black/10 rounded-xl px-4 py-2.5 text-gray-655 hover:text-black font-mono text-xs font-bold uppercase transition-all cursor-pointer flex items-center justify-center gap-1.5 h-[38px] shrink-0 shadow-xs"
+              title="Aggiorna dati"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              <span>Aggiorna</span>
+            </button>
+          </div>
 
           {/* Table Container */}
           <div className="bg-white border border-black/[0.07] rounded-2xl overflow-hidden shadow-xs">
@@ -335,24 +353,21 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                     {displayedTickets.map((ticket) => (
                       <tr
                         key={ticket.id}
+                        onClick={() => router.push(`/dashboard/tickets/${ticket.id}`)}
                         className="hover:bg-black/[0.015] transition-colors cursor-pointer"
                       >
                         <td className="p-4 font-bold text-black">
-                          <Link href={`/dashboard/tickets/${ticket.id}`} className="block">
-                            {ticket.ticketNumber}
-                          </Link>
+                          {ticket.ticketNumber}
                         </td>
                         <td className="p-4 max-w-[300px] truncate text-gray-800 font-sans font-medium">
-                          <Link href={`/dashboard/tickets/${ticket.id}`} className="block">
-                            <span className="flex items-center gap-1.5 truncate">
-                              {ticket.isSuggestion && (
-                                <span className="bg-[#11BCEC]/15 text-[#004B97] border border-[#11BCEC]/30 text-[9px] font-bold px-1.5 py-0.5 rounded-md font-mono shrink-0 select-none" title="Suggerimento / Nuova Idea">
-                                  💡 IDEA
-                                </span>
-                              )}
-                              <span className="truncate">{ticket.title}</span>
-                            </span>
-                          </Link>
+                          <span className="flex items-center gap-1.5 truncate">
+                            {ticket.isSuggestion && (
+                              <span className="bg-[#11BCEC]/15 text-[#004B97] border border-[#11BCEC]/30 text-[9px] font-bold px-1.5 py-0.5 rounded-md font-mono shrink-0 select-none" title="Suggerimento / Nuova Idea">
+                                💡 IDEA
+                              </span>
+                            )}
+                            <span className="truncate">{ticket.title}</span>
+                          </span>
                         </td>
                         <td className="p-4">
                           <span className="border border-black/5 bg-gray-100 text-gray-650 px-2.5 py-0.5 rounded text-[10px]">

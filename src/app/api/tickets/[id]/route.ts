@@ -149,6 +149,7 @@ export async function PATCH(
       const statusLabelMap: Record<TicketStatus, string> = {
         NUOVO: 'Da valutare (Nuovo)',
         IN_VALUTAZIONE: 'In Valutazione',
+        IN_CARICO: 'In Carico',
         RISPOSTO: 'Risposto',
         RISOLTO: 'Risolto',
         CHIUSO: 'Chiuso',

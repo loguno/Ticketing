@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface UserInfo {
   id: string;
@@ -32,7 +33,7 @@ interface Ticket {
   ticketNumber: string;
   title: string;
   description: string;
-  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
+  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'IN_CARICO' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
   priority: 'BASSA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
@@ -61,6 +62,7 @@ interface TicketDetailClientProps {
 }
 
 export default function TicketDetailClient({ user, ticketId, initialOperators }: TicketDetailClientProps) {
+  const router = useRouter();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [operators] = useState<Operator[]>(initialOperators);
@@ -221,7 +223,12 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
       }
       setTimeout(() => setSuccessMessage(null), 5000); // hide after 5 seconds
 
-      fetchTicketDetails(); // Reload message logs
+      if (user.role === 'STANDARD') {
+        router.push('/dashboard/tickets');
+        router.refresh();
+      } else {
+        fetchTicketDetails(); // Reload message logs
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Errore imprevisto.';
       setMsgError(errorMsg);
@@ -554,6 +561,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                     >
                       <option value="NUOVO">Da valutare</option>
                       <option value="IN_VALUTAZIONE">In Valutazione</option>
+                      <option value="IN_CARICO">In Carico</option>
                       <option value="RISPOSTO">Risposto</option>
                       <option value="SOSPESO">Sospeso</option>
                       <option value="RISOLTO">Risolto</option>
@@ -692,6 +700,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                   <span className={`font-bold ${
                     ticket.status === 'NUOVO' ? 'text-blue-700' :
                     ticket.status === 'IN_VALUTAZIONE' ? 'text-[#C94E03]' :
+                    ticket.status === 'IN_CARICO' ? 'text-amber-800' :
                     ticket.status === 'RISPOSTO' ? 'text-cyan-700' :
                     ticket.status === 'RISOLTO' ? 'text-emerald-700' :
                     ticket.status === 'SOSPESO' ? 'text-slate-650' :
@@ -700,6 +709,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                     {{
                       NUOVO: 'Da valutare',
                       IN_VALUTAZIONE: 'In Valutazione',
+                      IN_CARICO: 'In Carico',
                       RISPOSTO: 'Risposto',
                       RISOLTO: 'Risolto',
                       CHIUSO: 'Chiuso',

@@ -189,6 +189,14 @@ export async function POST(
       });
     }
 
+    // Update ticket status to IN_CARICO if a standard user sends a message
+    if (userRole === 'STANDARD') {
+      await db.ticket.update({
+        where: { id },
+        data: { status: 'IN_CARICO' },
+      });
+    }
+
     // Notify user if it's a public communication sent by staff
     if (type === 'USER_COMMUNICATION' && userRole !== 'STANDARD' && sendNotification && ticket.contact) {
       sendTicketEmail({

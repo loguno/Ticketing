@@ -15,7 +15,7 @@ interface Ticket {
   ticketNumber: string;
   title: string;
   description: string;
-  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
+  status: 'NUOVO' | 'IN_VALUTAZIONE' | 'IN_CARICO' | 'RISPOSTO' | 'RISOLTO' | 'CHIUSO' | 'NON_RISOLVIBILE' | 'ANNULLATO' | 'SOSPESO';
   priority: 'BASSA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
@@ -219,6 +219,20 @@ export default function IdeasClient({ operators }: IdeasClientProps) {
               <option value="AMMINISTRATIVO">Amministrativo</option>
               <option value="ALTRO">Altro</option>
             </select>
+          </div>
+
+          {/* Refresh Button */}
+          <div className="w-full md:w-auto shrink-0 flex items-end">
+            <button
+              onClick={() => fetchIdeas()}
+              className="w-full md:w-auto bg-gray-100 hover:bg-gray-200 border border-black/10 rounded-lg px-4 py-2 text-gray-600 hover:text-black transition-all cursor-pointer uppercase font-bold text-[10px] flex items-center justify-center gap-1.5"
+              title="Aggiorna dati"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              Aggiorna
+            </button>
           </div>
 
 
