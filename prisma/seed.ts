@@ -49,10 +49,24 @@ async function main() {
     },
   });
 
+  // Upsert Ivano Fiorito (Standard User)
+  const ivanoHash = await bcrypt.hash('Password1234', 10);
+  await prisma.user.upsert({
+    where: { email: 'ivano.fiorito@logisticauno.com' },
+    update: {},
+    create: {
+      email: 'ivano.fiorito@logisticauno.com',
+      name: 'Ivano Fiorito',
+      passwordHash: ivanoHash,
+      role: Role.STANDARD,
+    },
+  });
+
   console.log('Seed success: default users created.');
   console.log(`Admin user: admin@azienda.it / ${adminPassword}`);
   console.log(`Helpdesk operator: helpdesk-op@azienda.it / ${helpdeskPassword}`);
   console.log(`Standard user: utente@azienda.it / ${userPassword}`);
+  console.log(`Standard user: ivano.fiorito@logisticauno.com / Password1234`);
 
   // Seed System Settings
   await prisma.systemSetting.upsert({
