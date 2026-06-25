@@ -20,6 +20,7 @@ interface SendEmailParams {
   subject: string;
   bodyText: string;
   bodyHtml?: string;
+  ticketId?: string;
 }
 
 export async function sendTicketEmail({
@@ -28,11 +29,24 @@ export async function sendTicketEmail({
   subject,
   bodyText,
   bodyHtml,
+  ticketId,
 }: SendEmailParams) {
   // Ensure the ticket number is always included in the subject line for tracking replies
   const formattedSubject = subject.includes(`[${ticketNumber}]`)
     ? subject
     : `[${ticketNumber}] ${subject}`;
+
+  const portalUrl = ticketId
+    ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/tickets/${ticketId}`
+    : `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/tickets`;
+
+  const buttonHtml = `
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${portalUrl}" style="background-color: #004b97; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,75,151,0.2); font-family: Arial, sans-serif;">
+        Visualizza e Rispondi sul Portale
+      </a>
+    </div>
+  `;
 
   const defaultHtml = `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
@@ -40,12 +54,14 @@ export async function sendTicketEmail({
         <h2 style="margin: 0; color: #1e3a8a; font-size: 1.5rem;">Portale Gestione Ticket IT</h2>
         <span style="font-size: 0.875rem; color: #64748b;">Riferimento Ticket: <strong>${ticketNumber}</strong></span>
       </div>
-      <div style="line-height: 1.6; margin-bottom: 24px; font-size: 0.95rem;">
+      <div style="line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem;">
         ${bodyHtml || bodyText.replace(/\n/g, '<br>')}
       </div>
-      <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 0.75rem; color: #64748b; text-align: center;">
-        Questa è una notifica automatica inviata dal Portale Ticket. <br>
-        <strong>IMPORTANTE:</strong> Se rispondi a questa email, non rimuovere o modificare il numero di ticket [${ticketNumber}] nell'oggetto.
+      
+      ${buttonHtml}
+      
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 0.8rem; color: #dc2626; background-color: #fef2f2; border-radius: 6px; padding: 12px; text-align: center; font-weight: bold; margin-top: 20px; line-height: 1.4;">
+        ⚠️ NOTA IMPORTANTE: Questa è una notifica automatica. Si prega di <strong>NON RISPONDERE</strong> direttamente a questa email. Le risposte inviate via email non saranno elaborate. Per comunicare con il supporto, utilizza esclusivamente il pulsante sopra per accedere al portale.
       </div>
     </div>
   `;

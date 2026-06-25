@@ -162,12 +162,15 @@ export async function PATCH(
         to: oldTicket.contact,
         ticketNumber: oldTicket.ticketNumber,
         subject: `Aggiornamento Stato Ticket [${oldTicket.ticketNumber}]`,
-        bodyText: `Gentile utente,\n\nlo stato del suo ticket ${oldTicket.ticketNumber} ("${oldTicket.title}") è stato modificato in: ${statusLabel}.\n\nCordiali saluti,\nSupporto IT Logistica Uno`,
+        bodyText: `Gentile utente,\n\nlo stato del suo ticket ${oldTicket.ticketNumber} ("${oldTicket.title}") è stato modificato in: ${statusLabel}.\n\nSi prega di NON rispondere a questa e-mail. Acceda al portale per visualizzare i dettagli.\n\nCordiali saluti,\nSupporto IT Logistica Uno`,
         bodyHtml: `
           <p>Gentile utente,</p>
           <p>lo stato del suo ticket <strong>${oldTicket.ticketNumber}</strong> ("<em>${oldTicket.title}</em>") è stato modificato in: <strong>${statusLabel}</strong>.</p>
+          <p>Si prega di <strong>non rispondere direttamente a questa e-mail</strong>. Per visualizzare i dettagli del ticket o inviare una risposta, acceda alla sua dashboard cliccando sul pulsante sottostante.</p>
+          <br>
           <p>Cordiali saluti,<br>Supporto IT Logistica Uno</p>
         `,
+        ticketId: oldTicket.id,
       }).catch((emailError) => {
         console.error('[API Ticket PATCH] Failed to send status change notification email in background:', emailError);
       });

@@ -187,17 +187,18 @@ export async function POST(
         to: ticket.contact,
         ticketNumber: ticket.ticketNumber,
         subject: `Nuova comunicazione sul Ticket [${ticket.ticketNumber}]`,
-        bodyText: `Gentile utente,\n\nha ricevuto una nuova risposta da parte del supporto per il ticket ${ticket.ticketNumber} ("${ticket.title}"):\n\n---\n${body}\n---\n\nPuò rispondere direttamente a questa email o accedere al portale.\n\nCordiali saluti,\nSupporto IT Logistica Uno`,
+        bodyText: `Gentile utente,\n\nha ricevuto una nuova risposta da parte del supporto per il ticket ${ticket.ticketNumber} ("${ticket.title}"):\n\n---\n${body}\n---\n\nSi prega di NON rispondere a questa e-mail. Acceda al portale per visualizzare lo storico e rispondere.\n\nCordiali saluti,\nSupporto IT Logistica Uno`,
         bodyHtml: `
           <p>Gentile utente,</p>
           <p>ha ricevuto una nuova risposta da parte del supporto per il ticket <strong>${ticket.ticketNumber}</strong> ("<em>${ticket.title}</em>"):</p>
           <blockquote style="border-left: 4px solid #004b97; padding-left: 16px; margin: 16px 0; color: #475569; font-style: italic;">
             ${body.replace(/\n/g, '<br>')}
           </blockquote>
-          <p>Può rispondere a questa email (mantenendo il riferimento nell'oggetto) o accedere al portale per visualizzare lo storico.</p>
+          <p>Si prega di <strong>non rispondere direttamente a questa e-mail</strong>. Per visualizzare lo storico o inviare una risposta, acceda alla sua dashboard cliccando sul pulsante sottostante.</p>
           <br>
           <p>Cordiali saluti,<br>Supporto IT Logistica Uno</p>
         `,
+        ticketId: ticket.id,
       }).catch((emailError) => {
         console.error('[API Messages POST] Failed to notify contact via email in background:', emailError);
       });
@@ -223,6 +224,7 @@ export async function POST(
             </blockquote>
             <p>Accedere al portale per gestire la richiesta.</p>
           `,
+          ticketId: ticket.id,
         }).catch((emailError) => {
           console.error('[API Messages POST] Failed to notify operator via email in background:', emailError);
         });
