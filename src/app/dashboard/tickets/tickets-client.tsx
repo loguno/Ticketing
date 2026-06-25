@@ -160,6 +160,29 @@ export default function TicketsClient({ user }: TicketsClientProps) {
           </button>
         </div>
 
+        {/* Flashing Alert Banner for Support Team */}
+        {user.role !== 'STANDARD' && triageCount > 0 && (
+          <div className="bg-[#FEF2F2] border-2 border-red-250 rounded-2xl p-4 flex items-center justify-between shadow-xs border-l-8 border-l-[#EF4444] animate-pulse">
+            <div className="flex items-center gap-3">
+              <span className="flex h-3.5 w-3.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
+              </span>
+              <div className="text-sm font-sans font-medium text-red-900">
+                ATTENZIONE: Ci sono <span className="font-extrabold text-red-700">{triageCount}</span> nuovi ticket da valutare nel Basket Triage.
+              </div>
+            </div>
+            {activeTab !== 'triage' && (
+              <button 
+                onClick={() => setActiveTab('triage')}
+                className="text-xs bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl transition-all shadow-xs cursor-pointer uppercase font-mono tracking-wider border-0"
+              >
+                Vai al Triage
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Mockup-style KPI metrics cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs uppercase">
           
@@ -175,16 +198,31 @@ export default function TicketsClient({ user }: TicketsClientProps) {
           </div>
  
           {/* Card 2: BASKET TRIAGE */}
-          <div className="bg-white rounded-2xl border border-black/[0.07] p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
-            style={{ borderLeftColor: '#3B82F6' }}>
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full">BASKET TRIAGE</span>
+          <div className={`bg-white rounded-2xl border p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4 ${
+            triageCount > 0 
+              ? 'border-red-200 ring-2 ring-red-500/10' 
+              : 'border-black/[0.07]'
+          }`}
+            style={{ borderLeftColor: triageCount > 0 ? '#EF4444' : '#3B82F6' }}>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-full flex items-center justify-center gap-1.5">
+              {triageCount > 0 && (
+                <span className="flex h-2.5 w-2.5 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+              )}
+              BASKET TRIAGE
+            </span>
             <div className="flex items-center justify-center gap-3 mt-3 w-full">
-              <span className="text-4xl font-black text-gray-900 tracking-tight">{triageCount}</span>
+              <span className={`text-4xl font-black tracking-tight ${triageCount > 0 ? 'text-red-700' : 'text-gray-900'}`}>{triageCount}</span>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0"
-                style={{ background: '#3B82F620', color: '#1d4ed8' }}>DA VALUTARE</span>
+                style={{ 
+                  background: triageCount > 0 ? '#EF444415' : '#3B82F620', 
+                  color: triageCount > 0 ? '#DC2626' : '#1d4ed8' 
+                }}>[ {triageCount > 0 ? 'NUOVI' : 'DA VALUTARE'} ]</span>
             </div>
           </div>
- 
+
           {/* Card 3: TICKET IN CORSO */}
           <div className="bg-white rounded-2xl border border-black/[0.07] p-6 flex flex-col items-center justify-between min-h-[110px] shadow-xs hover:shadow-sm transition-all border-l-4"
             style={{ borderLeftColor: '#11BCEC' }}>
