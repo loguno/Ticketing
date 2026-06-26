@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS "public";
 CREATE TYPE "Role" AS ENUM ('STANDARD', 'HELPDESK', 'ADMIN');
 
 -- CreateEnum
-CREATE TYPE "TicketStatus" AS ENUM ('NUOVO', 'IN_VALUTAZIONE', 'RISOLTO', 'CHIUSO', 'NON_RISOLVIBILE', 'ANNULLATO');
+CREATE TYPE "TicketStatus" AS ENUM ('NUOVO', 'IN_VALUTAZIONE', 'IN_CARICO', 'RISPOSTO', 'RISOLTO', 'CHIUSO', 'NON_RISOLVIBILE', 'ANNULLATO', 'SOSPESO');
 
 -- CreateEnum
 CREATE TYPE "TicketPriority" AS ENUM ('BASSA', 'MEDIA', 'ALTA', 'CRITICA');
@@ -20,7 +20,10 @@ CREATE TYPE "TicketOrigin" AS ENUM ('PORTALE', 'EMAIL');
 CREATE TYPE "MessageType" AS ENUM ('INTERNAL_NOTE', 'USER_COMMUNICATION');
 
 -- CreateEnum
-CREATE TYPE "StartupStatus" AS ENUM ('NUOVO', 'IN_LAVORAZIONE', 'CONCLUSO');
+CREATE TYPE "StartupStatus" AS ENUM ('NUOVO', 'IN_LAVORAZIONE', 'CONCLUSO', 'SOSPESO', 'ANNULLATO');
+
+-- CreateEnum
+CREATE TYPE "BoardType" AS ENUM ('STARTUP', 'TMS', 'WMS', 'CROSS_DOCKING');
 
 -- CreateEnum
 CREATE TYPE "SubactivityStatus" AS ENUM ('DA_FARE', 'IN_CORSO', 'COMPLETATA');
@@ -50,6 +53,7 @@ CREATE TABLE "tickets" (
     "origin" "TicketOrigin" NOT NULL DEFAULT 'PORTALE',
     "contact" TEXT NOT NULL,
     "targetCloseDate" TIMESTAMP(3),
+    "isSuggestion" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "creatorId" TEXT,
@@ -94,6 +98,7 @@ CREATE TABLE "startup_activities" (
     "startDate" TIMESTAMP(3),
     "targetCompleteDate" TIMESTAMP(3),
     "status" "StartupStatus" NOT NULL DEFAULT 'NUOVO',
+    "boardType" "BoardType" NOT NULL DEFAULT 'STARTUP',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -143,7 +148,7 @@ ALTER TABLE "messages" ADD CONSTRAINT "messages_ticketId_fkey" FOREIGN KEY ("tic
 ALTER TABLE "messages" ADD CONSTRAINT "messages_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "attachments" ADD CONSTRAINT "attachments_ticketId_fkey" FOREIGN KEY ("attachments_ticketId_fkey") REFERENCES "tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "attachments" ADD CONSTRAINT "attachments_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "messages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
