@@ -1,4 +1,6 @@
--- Migration: Add missing enum values and columns that were added after initial migration
+-- Migration 1: Add missing enum values and columns
+-- These were added to the schema after the initial migration was already deployed.
+-- Uses IF NOT EXISTS to be idempotent (safe to run multiple times).
 
 -- Add missing TicketStatus enum values
 ALTER TYPE "TicketStatus" ADD VALUE IF NOT EXISTS 'IN_CARICO';
@@ -9,15 +11,11 @@ ALTER TYPE "TicketStatus" ADD VALUE IF NOT EXISTS 'SOSPESO';
 ALTER TYPE "StartupStatus" ADD VALUE IF NOT EXISTS 'SOSPESO';
 ALTER TYPE "StartupStatus" ADD VALUE IF NOT EXISTS 'ANNULLATO';
 
--- Add missing BoardType enum (if not exists)
-DO $$ BEGIN
-  CREATE TYPE "BoardType" AS ENUM ('STARTUP', 'TMS', 'WMS', 'CROSS_DOCKING');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
+-- Add BoardType enum (new, did not exist in 0_init)
+CREATE TYPE "BoardType" AS ENUM ('STARTUP', 'TMS', 'WMS', 'CROSS_DOCKING');
 
--- Add isSuggestion column to tickets (if not exists)
+-- Add isSuggestion column to tickets
 ALTER TABLE "tickets" ADD COLUMN IF NOT EXISTS "isSuggestion" BOOLEAN NOT NULL DEFAULT false;
 
--- Add boardType column to startup_activities (if not exists)
+-- Add boardType column to startup_activities
 ALTER TABLE "startup_activities" ADD COLUMN IF NOT EXISTS "boardType" "BoardType" NOT NULL DEFAULT 'STARTUP';
