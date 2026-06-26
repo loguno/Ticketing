@@ -1,6 +1,5 @@
 {
   "deploy": {
-    "prerun": "node scripts/check-env.js",
     "startscript": "npm run start"
   }
 }
