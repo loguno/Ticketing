@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "env": {
+    "PRISMA_GENERATE_NO_ENGINE": "1"
+  }
+}

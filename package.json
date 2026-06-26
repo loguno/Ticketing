@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate deploy && prisma generate && next build",
+    "build": "prisma generate && next build",
     "start": "next start -p ${PORT:-3000}",
     "lint": "eslint",
     "postinstall": "prisma generate",
@@ -44,7 +44,7 @@
     "seed": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed.ts"
   },
   "engines": {
-    "node": ">=20.19.0",
+    "node": "20.x",
     "npm": ">=10.0.0"
   }
 }
