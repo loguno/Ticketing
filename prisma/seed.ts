@@ -4,21 +4,29 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@azienda.it';
   const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'AdminPass123!';
+  const helpdeskEmail = process.env.SEED_HELPDESK_EMAIL || 'helpdesk-op@azienda.it';
   const helpdeskPassword = process.env.SEED_HELPDESK_PASSWORD || 'HelpdeskPass123!';
+  const userEmail = process.env.SEED_USER_EMAIL || 'utente@azienda.it';
   const userPassword = process.env.SEED_USER_PASSWORD || 'UserPass123!';
+  const ivanoEmail = process.env.SEED_IVANO_EMAIL || 'ivano.fiorito@logisticauno.com';
+  const ivanoPassword = process.env.SEED_IVANO_PASSWORD || 'Password1234';
 
   // Hash passwords
   const adminHash = await bcrypt.hash(adminPassword, 10);
   const helpdeskHash = await bcrypt.hash(helpdeskPassword, 10);
   const userHash = await bcrypt.hash(userPassword, 10);
+  const ivanoHash = await bcrypt.hash(ivanoPassword, 10);
 
   // Upsert Admin
   await prisma.user.upsert({
-    where: { email: 'admin@azienda.it' },
-    update: {},
+    where: { email: adminEmail },
+    update: {
+      passwordHash: adminHash,
+    },
     create: {
-      email: 'admin@azienda.it',
+      email: adminEmail,
       name: 'System Administrator',
       passwordHash: adminHash,
       role: Role.ADMIN,
@@ -27,10 +35,12 @@ async function main() {
 
   // Upsert Helpdesk Operator
   await prisma.user.upsert({
-    where: { email: 'helpdesk-op@azienda.it' },
-    update: {},
+    where: { email: helpdeskEmail },
+    update: {
+      passwordHash: helpdeskHash,
+    },
     create: {
-      email: 'helpdesk-op@azienda.it',
+      email: helpdeskEmail,
       name: 'Help Desk Operator',
       passwordHash: helpdeskHash,
       role: Role.HELPDESK,
@@ -39,10 +49,12 @@ async function main() {
 
   // Upsert Standard User
   await prisma.user.upsert({
-    where: { email: 'utente@azienda.it' },
-    update: {},
+    where: { email: userEmail },
+    update: {
+      passwordHash: userHash,
+    },
     create: {
-      email: 'utente@azienda.it',
+      email: userEmail,
       name: 'Standard User',
       passwordHash: userHash,
       role: Role.STANDARD,
@@ -50,12 +62,13 @@ async function main() {
   });
 
   // Upsert Ivano Fiorito (Standard User)
-  const ivanoHash = await bcrypt.hash('Password1234', 10);
   await prisma.user.upsert({
-    where: { email: 'ivano.fiorito@logisticauno.com' },
-    update: {},
+    where: { email: ivanoEmail },
+    update: {
+      passwordHash: ivanoHash,
+    },
     create: {
-      email: 'ivano.fiorito@logisticauno.com',
+      email: ivanoEmail,
       name: 'Ivano Fiorito',
       passwordHash: ivanoHash,
       role: Role.STANDARD,
@@ -63,10 +76,10 @@ async function main() {
   });
 
   console.log('Seed success: default users created.');
-  console.log(`Admin user: admin@azienda.it / ${adminPassword}`);
-  console.log(`Helpdesk operator: helpdesk-op@azienda.it / ${helpdeskPassword}`);
-  console.log(`Standard user: utente@azienda.it / ${userPassword}`);
-  console.log(`Standard user: ivano.fiorito@logisticauno.com / Password1234`);
+  console.log(`Admin user: ${adminEmail} / ${adminPassword}`);
+  console.log(`Helpdesk operator: ${helpdeskEmail} / ${helpdeskPassword}`);
+  console.log(`Standard user: ${userEmail} / ${userPassword}`);
+  console.log(`Standard user (Ivano): ${ivanoEmail} / ${ivanoPassword}`);
 
   // Seed System Settings
   await prisma.systemSetting.upsert({
@@ -92,8 +105,8 @@ async function main() {
   await prisma.startupSubactivity.deleteMany({});
   await prisma.startupActivity.deleteMany({});
 
-  const operator = await prisma.user.findUnique({ where: { email: 'helpdesk-op@azienda.it' } });
-  const standardUser = await prisma.user.findUnique({ where: { email: 'utente@azienda.it' } });
+  const operator = await prisma.user.findUnique({ where: { email: helpdeskEmail } });
+  const standardUser = await prisma.user.findUnique({ where: { email: userEmail } });
 
   const act1 = await prisma.startupActivity.create({
     data: {
