@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "node scripts/switch-to-postgres.js && prisma generate && next build",
+  "buildCommand": "node scripts/switch-to-postgres.js && prisma generate && npx prisma db push --accept-data-loss && npm run db:seed && next build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
   "env": {
