@@ -70,6 +70,12 @@ const iconIdeas = (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 113.536 0V21h-2v-2.121z" />
   </svg>
 );
+const iconSchedule = (
+  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
 
 export default function Sidebar({ user, width }: SidebarProps) {
   const pathname = usePathname();
@@ -138,6 +144,12 @@ export default function Sidebar({ user, width }: SidebarProps) {
           name: 'Gestione Utenti',
           href: '/dashboard/users',
           icon: iconUsers,
+          roles: ['ADMIN'],
+        },
+        {
+          name: 'Pianificazione Report',
+          href: '/dashboard/admin/schedules',
+          icon: iconSchedule,
           roles: ['ADMIN'],
         },
       ],

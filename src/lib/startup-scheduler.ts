@@ -1,5 +1,9 @@
 import { db } from './db';
-import { sendStartupEmail } from './smtp';
+import { sendStartupEmail, sendReportEmail } from './smtp';
+import { generateActivitiesPdf } from './pdf-generator';
+import { Prisma, BoardType } from '@prisma/client';
+
+
 
 let isRunning = false;
 
@@ -219,6 +223,170 @@ export async function checkAndSendPeriodicReport() {
   }
 }
 
+export function calculateNextRun(startDate: Date, frequency: string, freqDetails: string | null, fromDate: Date = new Date()): Date {
+  const start = new Date(startDate);
+  // If start date is in the future, it is our first run date
+  const candidate = start > fromDate ? start : new Date(fromDate.getTime() + 60 * 1000); // minimum 1 min in the future
+
+  if (frequency === 'giornaliera') {
+    let allowedDays: number[] = [];
+    try {
+      if (freqDetails) allowedDays = JSON.parse(freqDetails);
+    } catch {}
+
+    if (allowedDays.length === 0) {
+      if (candidate <= fromDate) {
+        candidate.setDate(candidate.getDate() + 1);
+      }
+      return candidate;
+    }
+
+    while (candidate <= fromDate || !allowedDays.includes(candidate.getDay())) {
+      candidate.setDate(candidate.getDate() + 1);
+    }
+    return candidate;
+  }
+
+  if (frequency === 'settimanale') {
+    let targetDay = 1; // Default Monday
+    try {
+      if (freqDetails) targetDay = parseInt(freqDetails);
+    } catch {}
+
+    while (candidate <= fromDate || candidate.getDay() !== targetDay) {
+      candidate.setDate(candidate.getDate() + 1);
+    }
+    return candidate;
+  }
+
+  if (frequency === 'mensile') {
+    let targetDay = 1;
+    try {
+      if (freqDetails) targetDay = parseInt(freqDetails);
+    } catch {}
+
+    while (candidate <= fromDate || candidate.getDate() !== targetDay) {
+      candidate.setDate(candidate.getDate() + 1);
+    }
+    return candidate;
+  }
+
+  candidate.setDate(candidate.getDate() + 1);
+  return candidate;
+}
+
+export async function runReportSchedule(scheduleId: string, isTest: boolean = false): Promise<boolean> {
+  try {
+    const schedule = await db.reportSchedule.findUnique({
+      where: { id: scheduleId },
+    });
+    if (!schedule) throw new Error('Schedulazione non trovata.');
+
+    // 1. Fetch startup activities based on filters
+    const andConditions: Prisma.StartupActivityWhereInput[] = [];
+    if (schedule.boardTypes && schedule.boardTypes !== 'ALL') {
+      const types = schedule.boardTypes.split(',').map((t) => t.trim() as BoardType);
+      andConditions.push({ boardType: { in: types } });
+    }
+    if (schedule.clientProject && schedule.clientProject !== 'ALL') {
+      andConditions.push({ clientProject: schedule.clientProject });
+    }
+
+    const where = andConditions.length > 0 ? { AND: andConditions } : {};
+    const activities = await db.startupActivity.findMany({
+      where,
+      include: {
+        subactivities: {
+          include: {
+            responsible: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 2. Generate PDF Report
+    const pdfBuffer = await generateActivitiesPdf(activities);
+
+    // 3. Send email with PDF attachment
+    const subject = isTest
+      ? `[TEST REPORT] ${schedule.name} - ${new Date().toLocaleDateString('it-IT')}`
+      : `[REPORT IT] ${schedule.name} - ${new Date().toLocaleDateString('it-IT')}`;
+
+    const bodyText = `Gentile utente,\n\nin allegato trovi il report periodico delle attività di sviluppo in formato PDF.\n\nNome Schedulazione: ${schedule.name}\nFiltri applicati:\n- Tipologie attività: ${schedule.boardTypes}\n- Progetto/Cliente: ${schedule.clientProject}\n\nQuesto messaggio è stato generato in modo automatico dal portale IT.`;
+
+    await sendReportEmail({
+      to: schedule.emails,
+      subject,
+      bodyText,
+      pdfBuffer,
+      filename: `${schedule.name.replace(/[^a-zA-Z0-9]/g, '_')}_Report.pdf`,
+    });
+
+    // 4. Create Success Log
+    await db.reportLog.create({
+      data: {
+        scheduleId: schedule.id,
+        recipient: schedule.emails,
+        status: 'SUCCESS',
+      },
+    });
+
+    // 5. Update schedule lastRun and nextRun (only if it is a real execution)
+    if (!isTest) {
+      const nextRun = calculateNextRun(schedule.startDate, schedule.frequency, schedule.freqDetails, new Date());
+      await db.reportSchedule.update({
+        where: { id: schedule.id },
+        data: {
+          lastRun: new Date(),
+          nextRun,
+        },
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`[Report Scheduler] Error executing schedule ${scheduleId}:`, error);
+    const errorMsg = error instanceof Error ? error.message : 'Errore sconosciuto';
+
+    await db.reportLog.create({
+      data: {
+        scheduleId,
+        recipient: '',
+        status: 'FAILED',
+        error: errorMsg,
+      },
+    }).catch((e) => console.error('[Report Scheduler] Failed logging report failure:', e));
+
+    return false;
+  }
+}
+
+export async function checkAndSendDynamicReports() {
+  const now = new Date();
+  try {
+    const schedulesToRun = await db.reportSchedule.findMany({
+      where: {
+        active: true,
+        nextRun: {
+          lte: now,
+        },
+      },
+    });
+
+    if (schedulesToRun.length > 0) {
+      console.log(`[Report Scheduler] Found ${schedulesToRun.length} report schedules due. Executing...`);
+      for (const schedule of schedulesToRun) {
+        await runReportSchedule(schedule.id, false);
+      }
+    }
+  } catch (error) {
+    console.error('[Report Scheduler] Error checking dynamic report schedules:', error);
+  }
+}
+
 interface GlobalWithScheduler {
   startupSchedulerInitialized?: boolean;
   startupSchedulerInterval?: NodeJS.Timeout | null;
@@ -236,7 +404,12 @@ export function initStartupScheduler() {
   
   // Run checks immediately on start, then every hour
   checkAndSendPeriodicReport();
-  const interval = setInterval(checkAndSendPeriodicReport, 60 * 60 * 1000); // 1 Hour
+  checkAndSendDynamicReports();
+  
+  const interval = setInterval(() => {
+    checkAndSendPeriodicReport();
+    checkAndSendDynamicReports();
+  }, 60 * 60 * 1000); // 1 Hour
   
   globalRef.startupSchedulerInterval = interval;
 }
@@ -250,4 +423,5 @@ export function stopStartupScheduler() {
     console.log('[Startup Scheduler] Scheduler stopped.');
   }
 }
+
 

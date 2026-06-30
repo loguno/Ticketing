@@ -191,3 +191,35 @@ model SystemSetting {
   @@map("system_settings")
 }
 
+model ReportSchedule {
+  id             String      @id @default(uuid())
+  name           String
+  emails         String      // Indirizzi e-mail separati da virgola
+  startDate      DateTime    // A partire da quando
+  frequency      String      // "giornaliera", "settimanale", "mensile"
+  freqDetails    String?     // Dettagli in formato JSON (es: giorni della settimana o giorno del mese)
+  boardTypes     String      // Sotto-attività a flag: STARTUP, WMS, TMS, CROSS_DOCKING o ALL
+  clientProject  String      // Nome specifico del cliente o "ALL"
+  active         Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  lastRun        DateTime?
+  nextRun        DateTime?
+  logs           ReportLog[]
+
+  @@map("report_schedules")
+}
+
+model ReportLog {
+  id          String         @id @default(uuid())
+  scheduleId  String
+  schedule    ReportSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  sentAt      DateTime       @default(now())
+  recipient   String
+  status      String         // "SUCCESS" o "FAILED"
+  error       String?
+
+  @@map("report_logs")
+}
+
+

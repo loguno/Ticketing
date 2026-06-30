@@ -116,3 +116,36 @@ export async function sendStartupEmail({
   return transporter.sendMail(mailOptions);
 }
 
+interface SendReportEmailParams {
+  to: string;
+  subject: string;
+  bodyText: string;
+  pdfBuffer: Buffer;
+  filename: string;
+}
+
+export async function sendReportEmail({
+  to,
+  subject,
+  bodyText,
+  pdfBuffer,
+  filename,
+}: SendReportEmailParams) {
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to,
+    subject,
+    text: bodyText,
+    attachments: [
+      {
+        filename,
+        content: pdfBuffer,
+        contentType: 'application/pdf',
+      },
+    ],
+  };
+
+  return transporter.sendMail(mailOptions);
+}
+
+
