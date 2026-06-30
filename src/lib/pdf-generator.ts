@@ -74,6 +74,10 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
         return Math.round((completed / total) * 100);
       };
 
+      // Split activities into Active and Completed
+      const activeActivities = activities.filter(a => a.status !== 'CONCLUSO');
+      const completedActivities = activities.filter(a => a.status === 'CONCLUSO');
+
       // ==========================================
       // PAGE 1: SUMMARY DASHBOARD (RIEPILOGO)
       // ==========================================
@@ -89,7 +93,7 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
       doc.fillColor(darkColor)
          .font('Helvetica')
          .fontSize(9)
-         .text(`Generato il: ${new Date().toLocaleDateString('it-IT')} // Riepilogo sintetico dello stato avanzamento`, { align: 'left' })
+         .text(`Generato il: ${new Date().toLocaleDateString('it-IT')} // Riepilogo sintetico di tutte le attività`, { align: 'left' })
          .moveDown(1.5);
 
       if (activities.length === 0) {
@@ -122,11 +126,8 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
       currentY += 20;
       doc.y = currentY;
 
-      // Draw Summary Table Rows
-      activities.forEach((activity, idx) => {
-        const progress = calculateProgress(activity);
-        
-        // Page break if table extends too long on summary page
+      // Function to check page breaks on summary page
+      const checkSummaryPageBreak = () => {
         if (doc.y > 510) {
           doc.addPage();
           doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
@@ -134,7 +135,7 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
           doc.x = margin;
           currentY = doc.y;
 
-          // Re-draw Header on new summary page
+          // Re-draw Header on new page
           doc.save();
           doc.rect(startX, currentY, contentWidth, 20).fill(primaryColor);
           doc.fillColor('#FFFFFF')
@@ -151,6 +152,13 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
           currentY += 20;
           doc.y = currentY;
         }
+      };
+
+      // Helper to render activity row in summary table
+      const renderSummaryRow = (activity: Activity, idx: number) => {
+        const progress = calculateProgress(activity);
+        
+        checkSummaryPageBreak(20);
 
         doc.save();
         // Alternate rows background
@@ -187,13 +195,49 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
         currentY += 20;
         doc.y = currentY;
         doc.x = margin;
-      });
+      };
+
+      // 1. Render Active Activities Section Header in table
+      if (activeActivities.length > 0) {
+        checkSummaryPageBreak(18);
+        doc.save();
+        doc.rect(startX, currentY, contentWidth, 18).fill('#EBF8FF');
+        doc.fillColor('#2B6CB0')
+           .font('Helvetica-Bold')
+           .fontSize(8)
+           .text('ATTIVITÀ IN CORSO', startX + 10, currentY + 5);
+        doc.restore();
+        currentY += 18;
+        doc.y = currentY;
+        
+        activeActivities.forEach((activity, idx) => {
+          renderSummaryRow(activity, idx);
+        });
+      }
+
+      // 2. Render Completed Activities Section Header in table
+      if (completedActivities.length > 0) {
+        checkSummaryPageBreak(18);
+        doc.save();
+        doc.rect(startX, currentY, contentWidth, 18).fill('#E6FFFA');
+        doc.fillColor('#234E52')
+           .font('Helvetica-Bold')
+           .fontSize(8)
+           .text('ATTIVITÀ COMPLETATE DI RECENTE', startX + 10, currentY + 5);
+        doc.restore();
+        currentY += 18;
+        doc.y = currentY;
+        
+        completedActivities.forEach((activity, idx) => {
+          renderSummaryRow(activity, idx);
+        });
+      }
 
       // ==========================================
-      // PAGES 2+: DETAILS FOR EACH ACTIVITY
+      // PAGES 2+: DETAILS FOR ACTIVE ACTIVITIES ONLY
       // ==========================================
-      activities.forEach((activity) => {
-        // Always break page to start details on a new page (Page 2)
+      activeActivities.forEach((activity) => {
+        // Always break page to start details on a new page
         doc.addPage();
         doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
         doc.y = 30;
@@ -345,6 +389,77 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
           });
         }
       });
+
+      // ==========================================
+      // SECTION: RECENTLY COMPLETED ACTIVITIES (AT THE END)
+      // ==========================================
+      if (completedActivities.length > 0) {
+        doc.addPage();
+        doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
+        doc.y = 30;
+        doc.x = margin;
+
+        doc.fillColor(primaryColor)
+           .font('Helvetica-Bold')
+           .fontSize(16)
+           .text('ATTIVITÀ COMPLETATE DI RECENTE', { align: 'left' });
+
+        doc.fillColor(darkColor)
+           .font('Helvetica')
+           .fontSize(9)
+           .text('Elenco storico delle attività completate con successo dal servizio IT', { align: 'left' })
+           .moveDown(1.5);
+
+        completedActivities.forEach((activity, idx) => {
+          // Page check for completed items listing
+          if (doc.y > 480) {
+            doc.addPage();
+            doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
+            doc.y = 30;
+            doc.x = margin;
+            
+            doc.fillColor(primaryColor)
+               .font('Helvetica-Bold')
+               .fontSize(16)
+               .text('ATTIVITÀ COMPLETATE DI RECENTE (Seguito)', { align: 'left' })
+               .moveDown(1.5);
+          }
+
+          doc.save();
+          // Compact visual presentation for completed activities
+          doc.fillColor(darkColor)
+             .font('Helvetica-Bold')
+             .fontSize(11)
+             .text(`${idx + 1}. ${activity.title}`);
+
+          doc.fillColor('#718096')
+             .font('Helvetica')
+             .fontSize(8.5)
+             .text(`Tipologia: ${activity.boardType} | Cliente / Progetto: ${activity.clientProject || 'N/D'} | Completata il: ${activity.targetCompleteDate ? new Date(activity.targetCompleteDate).toLocaleDateString('it-IT') : 'N/D'}`)
+             .moveDown(0.2);
+
+          if (activity.description) {
+            doc.fillColor('#4A5568')
+               .font('Helvetica-Oblique')
+               .fontSize(9)
+               .text(activity.description, { width: contentWidth })
+               .moveDown(0.5);
+          }
+          
+          doc.restore();
+
+          // Horizontal separator line
+          if (idx < completedActivities.length - 1) {
+            doc.strokeColor(borderColor)
+               .lineWidth(0.5)
+               .moveTo(margin, doc.y)
+               .lineTo(pageWidth - margin, doc.y)
+               .stroke();
+            doc.y += 10;
+            doc.x = margin;
+          }
+        });
+      }
 
       // --- Footer ---
       const pages = doc.bufferedPageRange();
