@@ -517,7 +517,7 @@ export default function SchedulesClient({ projectList }: SchedulesClientProps) {
                           {log.status}
                         </span>
                       </td>
-                      <td className="p-3 text-red-500 font-mono max-w-[250px] truncate" title={log.error || ''}>
+                      <td className="p-3 text-red-500 font-mono max-w-[350px] whitespace-normal break-all text-xs" title={log.error || ''}>
                         {log.error || '-'}
                       </td>
                     </tr>

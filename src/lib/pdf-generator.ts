@@ -127,8 +127,8 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
       doc.y = currentY;
 
       // Function to check page breaks on summary page
-      const checkSummaryPageBreak = () => {
-        if (doc.y > 510) {
+      const checkSummaryPageBreak = (neededHeight: number) => {
+        if (doc.y + neededHeight > 510) {
           doc.addPage();
           doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
           doc.y = 30;
