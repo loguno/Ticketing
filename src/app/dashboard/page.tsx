@@ -1,7 +1,6 @@
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 
 // --- SVG Donut Chart helper ---
 function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
@@ -169,7 +168,7 @@ export default async function DashboardPage() {
     select: { id: true, name: true },
   });
   const operatorMap = Object.fromEntries(operators.map(o => [o.id, o.name]));
-  const operatorColors = ['#004B97', '#11BCEC', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const operatorColors = ['#004B97', '#11BCEC', '#10B981', '#F59E0B', '#EF4444', '#0D9488'];
   const operatorData = byOperator.map((o, i) => ({
     label: operatorMap[o.operatorId!] ?? 'Sconosciuto',
     value: o._count.id,
@@ -190,14 +189,6 @@ export default async function DashboardPage() {
             <p className="text-xs font-mono text-[#004B97] uppercase tracking-widest mb-1">Dashboard</p>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">Benvenuto, {user.name}</h1>
             <p className="text-sm text-gray-400 mt-0.5 capitalize">{dateStr}</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/dashboard/tickets" className="flex items-center gap-2 border border-black/10 text-gray-700 font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors shadow-xs">
-              Vai ai Ticket →
-            </Link>
-            <Link href="/dashboard/startup" className="flex items-center gap-2 bg-[#004B97] hover:bg-[#003a75] text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors shadow-sm">
-              Start Up →
-            </Link>
           </div>
         </div>
 

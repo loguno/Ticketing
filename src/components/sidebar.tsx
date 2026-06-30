@@ -87,7 +87,7 @@ export default function Sidebar({ user, width }: SidebarProps) {
       ],
     },
     {
-      sectionLabel: 'OPERATIVO',
+      sectionLabel: 'SEGNALAZIONI UTENTI',
       items: [
         {
           name: 'Ticket IT',
@@ -100,6 +100,11 @@ export default function Sidebar({ user, width }: SidebarProps) {
           icon: iconIdeas,
           roles: ['ADMIN', 'HELPDESK'],
         },
+      ],
+    },
+    {
+      sectionLabel: 'ATTIVITÀ DI SVILUPPO',
+      items: [
         {
           name: 'Start Up',
           href: '/dashboard/startup',

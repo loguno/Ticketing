@@ -20,6 +20,7 @@ interface Ticket {
   category: 'TMS' | 'WMS' | 'AMMINISTRATIVO' | 'ALTRO';
   origin: 'PORTALE' | 'EMAIL';
   contact: string;
+  isSuggestion?: boolean;
   createdAt: string;
   operatorId: string | null;
   creator?: { name: string; email: string } | null;
@@ -99,7 +100,7 @@ export default function IdeasClient({ operators }: IdeasClientProps) {
 
   const columns: { id: string; title: string; color: string; bg: string; border: string; statuses: Ticket['status'][] }[] = [
     { id: 'NUOVO', title: 'Da Valutare', color: 'text-blue-700', bg: 'bg-blue-500/5', border: 'border-blue-500/20 bg-blue-50/40', statuses: ['NUOVO'] },
-    { id: 'IN_VALUTAZIONE', title: 'In Valutazione', color: 'text-[#C94E03]', bg: 'bg-[#E85D04]/5', border: 'border-[#E85D04]/20 bg-amber-50/40', statuses: ['IN_VALUTAZIONE'] },
+    { id: 'IN_VALUTAZIONE', title: 'In Valutazione', color: 'text-[#C94E03]', bg: 'bg-[#E85D04]/5', border: 'border-[#E85D04]/20 bg-amber-50/40', statuses: ['IN_VALUTAZIONE', 'IN_CARICO', 'RISPOSTO'] },
     { id: 'SOSPESO', title: 'Sospeso', color: 'text-slate-650', bg: 'bg-slate-500/5', border: 'border-slate-400/30 bg-slate-100/40', statuses: ['SOSPESO'] },
     { id: 'RISOLTO', title: 'Approvato/Completato', color: 'text-emerald-700', bg: 'bg-emerald-500/5', border: 'border-emerald-500/20 bg-emerald-50/40', statuses: ['RISOLTO', 'CHIUSO'] },
     { id: 'ANNULLATO', title: 'Respinto/Annullato', color: 'text-red-700', bg: 'bg-red-500/5', border: 'border-red-500/20 bg-red-50/40', statuses: ['ANNULLATO', 'NON_RISOLVIBILE'] },

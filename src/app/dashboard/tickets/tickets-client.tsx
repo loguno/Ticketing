@@ -1,8 +1,8 @@
 'use client';
  
 import React, { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
 import TicketFilters from '@/components/ticket-filters';
 import TicketForm from '@/components/ticket-form';
 
