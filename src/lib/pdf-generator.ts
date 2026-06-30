@@ -25,7 +25,7 @@ interface Activity {
 export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
-      // Create PDF in Landscape layout for better table columns mapping
+      // Create PDF in Landscape layout
       const doc = new PDFDocument({
         size: 'A4',
         layout: 'landscape',
@@ -49,33 +49,6 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
       const darkColor = '#1A202C';
       const lightBg = '#F7FAFC';
       const borderColor = '#E2E8F0';
-
-      // --- Header ---
-      doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
-      doc.y = 30;
-
-      // Force cursor reset to default margin
-      doc.x = margin;
-
-      doc.fillColor(primaryColor)
-         .font('Helvetica-Bold')
-         .fontSize(22)
-         .text('REPORT STATO AVANZAMENTO ATTIVITÀ IT', { align: 'left' });
-
-      doc.fillColor(darkColor)
-         .font('Helvetica')
-         .fontSize(9)
-         .text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, { align: 'left' })
-         .moveDown(2);
-
-      if (activities.length === 0) {
-        doc.fillColor('#718096')
-           .font('Helvetica-Oblique')
-           .fontSize(12)
-           .text('Nessuna attività di sviluppo trovata con i filtri selezionati.', { align: 'center' });
-        doc.end();
-        return;
-      }
 
       // Helper to draw progress bar
       const drawProgressBar = (x: number, y: number, width: number, height: number, progress: number) => {
@@ -101,35 +74,149 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
         return Math.round((completed / total) * 100);
       };
 
-      activities.forEach((activity, index) => {
-        // Reset horizontal cursor to avoid side shifting from previous tables
-        doc.x = margin;
+      // ==========================================
+      // PAGE 1: SUMMARY DASHBOARD (RIEPILOGO)
+      // ==========================================
+      doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
+      doc.y = 30;
+      doc.x = margin;
 
-        // Prevent page breaks inside activity blocks
-        if (doc.y > 420) {
+      doc.fillColor(primaryColor)
+         .font('Helvetica-Bold')
+         .fontSize(22)
+         .text('REPORT ATTIVITÀ IT - RIEPILOGO GENERALE', { align: 'left' });
+
+      doc.fillColor(darkColor)
+         .font('Helvetica')
+         .fontSize(9)
+         .text(`Generato il: ${new Date().toLocaleDateString('it-IT')} // Riepilogo sintetico dello stato avanzamento`, { align: 'left' })
+         .moveDown(1.5);
+
+      if (activities.length === 0) {
+        doc.fillColor('#718096')
+           .font('Helvetica-Oblique')
+           .fontSize(12)
+           .text('Nessuna attività di sviluppo trovata con i filtri selezionati.', { align: 'center' });
+        doc.end();
+        return;
+      }
+
+      // Draw Summary Table Header
+      let currentY = doc.y;
+      const startX = margin;
+
+      doc.save();
+      doc.rect(startX, currentY, contentWidth, 20).fill(primaryColor);
+      doc.fillColor('#FFFFFF')
+         .font('Helvetica-Bold')
+         .fontSize(8.5);
+      
+      doc.text('Attività di Sviluppo', startX + 10, currentY + 6, { width: 230 });
+      doc.text('Tipologia', startX + 250, currentY + 6, { width: 90 });
+      doc.text('Cliente / Progetto', startX + 350, currentY + 6, { width: 130 });
+      doc.text('Scadenza', startX + 490, currentY + 6, { width: 70 });
+      doc.text('Stato', startX + 570, currentY + 6, { width: 60 });
+      doc.text('Avanzamento', startX + 640, currentY + 6, { width: 110 });
+      doc.restore();
+
+      currentY += 20;
+      doc.y = currentY;
+
+      // Draw Summary Table Rows
+      activities.forEach((activity, idx) => {
+        const progress = calculateProgress(activity);
+        
+        // Page break if table extends too long on summary page
+        if (doc.y > 510) {
           doc.addPage();
           doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
           doc.y = 30;
           doc.x = margin;
+          currentY = doc.y;
+
+          // Re-draw Header on new summary page
+          doc.save();
+          doc.rect(startX, currentY, contentWidth, 20).fill(primaryColor);
+          doc.fillColor('#FFFFFF')
+             .font('Helvetica-Bold')
+             .fontSize(8.5);
+          
+          doc.text('Attività di Sviluppo', startX + 10, currentY + 6, { width: 230 });
+          doc.text('Tipologia', startX + 250, currentY + 6, { width: 90 });
+          doc.text('Cliente / Progetto', startX + 350, currentY + 6, { width: 130 });
+          doc.text('Scadenza', startX + 490, currentY + 6, { width: 70 });
+          doc.text('Stato', startX + 570, currentY + 6, { width: 60 });
+          doc.text('Avanzamento', startX + 640, currentY + 6, { width: 110 });
+          doc.restore();
+          currentY += 20;
+          doc.y = currentY;
         }
+
+        doc.save();
+        // Alternate rows background
+        doc.rect(startX, currentY, contentWidth, 20).fill(idx % 2 === 0 ? lightBg : '#FFFFFF');
+        doc.fillColor(darkColor)
+           .font('Helvetica')
+           .fontSize(8);
+
+        // Map status translation
+        const statusMap: Record<string, string> = {
+          NUOVO: 'Nuovo',
+          IN_LAVORAZIONE: 'In Corso',
+          CONCLUSO: 'Concluso',
+        };
+        const statusText = statusMap[activity.status] || activity.status;
+
+        doc.font('Helvetica-Bold').text(activity.title, startX + 10, currentY + 6, { width: 230, ellipsis: true });
+        doc.font('Helvetica').text(activity.boardType, startX + 250, currentY + 6, { width: 90, ellipsis: true });
+        doc.text(activity.clientProject || 'Non specificato', startX + 350, currentY + 6, { width: 130, ellipsis: true });
+        doc.text(activity.targetCompleteDate ? new Date(activity.targetCompleteDate).toLocaleDateString('it-IT') : 'N/D', startX + 490, currentY + 6, { width: 70 });
+        
+        let stateCol = '#64748B';
+        if (activity.status === 'NUOVO') stateCol = '#3182CE';
+        if (activity.status === 'CONCLUSO') stateCol = '#38A169';
+        doc.fillColor(stateCol).font('Helvetica-Bold');
+        doc.text(statusText, startX + 570, currentY + 6, { width: 60 });
+
+        // Draw small inline progress bar
+        doc.fillColor(darkColor).font('Helvetica-Bold');
+        doc.text(`${progress}%`, startX + 640, currentY + 6, { width: 30 });
+        drawProgressBar(startX + 675, currentY + 6, 75, 7, progress);
+
+        doc.restore();
+        currentY += 20;
+        doc.y = currentY;
+        doc.x = margin;
+      });
+
+      // ==========================================
+      // PAGES 2+: DETAILS FOR EACH ACTIVITY
+      // ==========================================
+      activities.forEach((activity) => {
+        // Always break page to start details on a new page (Page 2)
+        doc.addPage();
+        doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
+        doc.y = 30;
+        doc.x = margin;
 
         const progress = calculateProgress(activity);
 
-        // Header section of the Card
+        // Header Section of Detail Page
         doc.fillColor(primaryColor)
            .font('Helvetica-Bold')
-           .fontSize(13)
-           .text(`${activity.title}`, { underline: false });
+           .fontSize(14)
+           .text(`SCHEDA DETTAGLIO: ${activity.title}`, { underline: false })
+           .moveDown(0.2);
 
         doc.fillColor('#718096')
            .font('Helvetica-Bold')
            .fontSize(9)
-           .text(`Tipologia: ${activity.boardType} | Cliente: ${activity.clientProject || 'N/D'}`);
+           .text(`Tipologia Attività: ${activity.boardType} | Cliente / Progetto: ${activity.clientProject || 'N/D'}`);
 
         doc.font('Helvetica')
            .text(`Inizio: ${activity.startDate ? new Date(activity.startDate).toLocaleDateString('it-IT') : 'N/D'} | Fine Prevista: ${activity.targetCompleteDate ? new Date(activity.targetCompleteDate).toLocaleDateString('it-IT') : 'N/D'}`);
 
-        doc.moveDown(0.4);
+        doc.moveDown(0.5);
 
         if (activity.description) {
           doc.fillColor(darkColor)
@@ -139,7 +226,7 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
              .moveDown(0.6);
         }
 
-        // Progress Bar (aligned to the left, using full width spacing)
+        // Progress Bar
         const barY = doc.y;
         doc.fillColor(darkColor)
            .font('Helvetica-Bold')
@@ -148,13 +235,12 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
         
         drawProgressBar(margin + 160, barY - 1, 150, 10, progress);
         
-        // Spacing after progress bar line
-        doc.y = barY + 18;
+        // Spacing after progress bar
+        doc.y = barY + 22;
         doc.x = margin;
 
         // Subactivities table-like listing
         if (activity.subactivities.length > 0) {
-          doc.moveDown(0.5);
           doc.fillColor(primaryColor)
              .font('Helvetica-Bold')
              .fontSize(9.5)
@@ -162,56 +248,55 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
              .moveDown(0.4);
 
           // Draw table header
-          const startX = margin;
-          let currentY = doc.y;
+          let currentDetailY = doc.y;
 
           doc.save();
-          doc.rect(startX, currentY, contentWidth, 18).fill('#E2E8F0');
+          doc.rect(startX, currentDetailY, contentWidth, 18).fill('#E2E8F0');
           doc.fillColor(darkColor)
              .font('Helvetica-Bold')
              .fontSize(8.5);
           
-          doc.text('Attività di Dettaglio', startX + 10, currentY + 4, { width: 350 });
-          doc.text('Stato', startX + 380, currentY + 4, { width: 100 });
-          doc.text('Assegnato a', startX + 500, currentY + 4, { width: 240 });
+          doc.text('Attività di Dettaglio', startX + 10, currentDetailY + 4, { width: 350 });
+          doc.text('Stato', startX + 380, currentDetailY + 4, { width: 100 });
+          doc.text('Assegnato a', startX + 500, currentDetailY + 4, { width: 240 });
           doc.restore();
 
-          currentY += 18;
-          doc.y = currentY;
+          currentDetailY += 18;
+          doc.y = currentDetailY;
           doc.x = margin;
 
           activity.subactivities.forEach((sub) => {
-            // Page check for subactivities
+            // Page break for detail subactivities
             if (doc.y > 510) {
               doc.addPage();
               doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
               doc.y = 30;
               doc.x = margin;
-              currentY = doc.y;
+              currentDetailY = doc.y;
 
               // Re-draw header on new page
               doc.save();
-              doc.rect(startX, currentY, contentWidth, 18).fill('#E2E8F0');
+              doc.rect(startX, currentDetailY, contentWidth, 18).fill('#E2E8F0');
               doc.fillColor(darkColor)
                  .font('Helvetica-Bold')
                  .fontSize(8.5);
               
-              doc.text('Attività di Dettaglio', startX + 10, currentY + 4, { width: 350 });
-              doc.text('Stato', startX + 380, currentY + 4, { width: 100 });
-              doc.text('Assegnato a', startX + 500, currentY + 4, { width: 240 });
+              doc.text('Attività di Dettaglio', startX + 10, currentDetailY + 4, { width: 350 });
+              doc.text('Stato', startX + 380, currentDetailY + 4, { width: 100 });
+              doc.text('Assegnato a', startX + 500, currentDetailY + 4, { width: 240 });
               doc.restore();
-              currentY += 18;
-              doc.y = currentY;
+              currentDetailY += 18;
+              doc.y = currentDetailY;
               doc.x = margin;
             }
 
             doc.save();
-            doc.rect(startX, currentY, contentWidth, 18).fill(lightBg);
+            doc.rect(startX, currentDetailY, contentWidth, 18).fill(lightBg);
             doc.fillColor(darkColor)
                .font('Helvetica')
                .fontSize(8.5);
 
-            // Status labels
+            // Status label colors
             let statusText = 'Da Fare';
             let statusColor = '#E53E3E';
             if (sub.status === 'IN_CORSO') {
@@ -222,19 +307,18 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
               statusColor = '#38A169';
             }
 
-            // Draw columns with specific horizontal alignment
-            doc.text(sub.title, startX + 10, currentY + 4, { width: 350, ellipsis: true });
+            doc.text(sub.title, startX + 10, currentDetailY + 4, { width: 350, ellipsis: true });
             
             doc.fillColor(statusColor).font('Helvetica-Bold');
-            doc.text(statusText, startX + 380, currentY + 4, { width: 100 });
+            doc.text(statusText, startX + 380, currentDetailY + 4, { width: 100 });
             
             doc.fillColor(darkColor).font('Helvetica');
-            doc.text(sub.responsible?.name || 'Non Assegnato', startX + 500, currentY + 4, { width: 240, ellipsis: true });
+            doc.text(sub.responsible?.name || 'Non Assegnato', startX + 500, currentDetailY + 4, { width: 240, ellipsis: true });
             
             doc.restore();
 
-            currentY += 18;
-            doc.y = currentY;
+            currentDetailY += 18;
+            doc.y = currentDetailY;
             doc.x = margin;
 
             if (sub.progressNotes) {
@@ -243,41 +327,26 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
                 doc.rect(0, 0, pageWidth, 12).fill(primaryColor);
                 doc.y = 30;
                 doc.x = margin;
-                currentY = doc.y;
+                currentDetailY = doc.y;
               }
 
               doc.save();
-              doc.rect(startX, currentY, contentWidth, 14).fill('#FAFBFD');
+              doc.rect(startX, currentDetailY, contentWidth, 14).fill('#FAFBFD');
               doc.fillColor('#718096')
                  .font('Helvetica-Oblique')
                  .fontSize(8);
-              doc.text(`   Note avanzamento: ${sub.progressNotes}`, startX + 15, currentY + 3, { width: contentWidth - 30, ellipsis: true });
+              doc.text(`   Note avanzamento: ${sub.progressNotes}`, startX + 15, currentDetailY + 3, { width: contentWidth - 30, ellipsis: true });
               doc.restore();
 
-              currentY += 14;
-              doc.y = currentY;
+              currentDetailY += 14;
+              doc.y = currentDetailY;
               doc.x = margin;
             }
           });
         }
-
-        // Space between cards
-        doc.y += 15;
-        doc.x = margin;
-
-        // Divider line
-        if (index < activities.length - 1) {
-          doc.strokeColor(borderColor)
-             .lineWidth(1)
-             .moveTo(margin, doc.y)
-             .lineTo(pageWidth - margin, doc.y)
-             .stroke();
-          doc.y += 15;
-          doc.x = margin;
-        }
       });
 
-      // --- Footer (Landscape) ---
+      // --- Footer ---
       const pages = doc.bufferedPageRange();
       for (let i = 0; i < pages.count; i++) {
         doc.switchToPage(i);
@@ -288,7 +357,7 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
         doc.text(
           `SISTEMA TICKET INTERNI - REPORT ATTIVITÀ IT // Pagina ${i + 1} di ${pages.count}`,
           margin,
-          550, // Positioned near the bottom of landscape page (595 height)
+          550,
           { align: 'center', width: contentWidth }
         );
       }
