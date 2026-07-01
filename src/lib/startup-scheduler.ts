@@ -225,8 +225,26 @@ export async function checkAndSendPeriodicReport() {
 
 export function calculateNextRun(startDate: Date, frequency: string, freqDetails: string | null, fromDate: Date = new Date()): Date {
   const start = new Date(startDate);
-  // If start date is in the future, it is our first run date
-  const candidate = start > fromDate ? start : new Date(fromDate.getTime() + 60 * 1000); // minimum 1 min in the future
+  
+  // If the configured start date/time is in the future, that is exactly our first run!
+  if (start > fromDate) {
+    return start;
+  }
+
+  // Preserve the original hour, minute, second and millisecond from the start date
+  const targetHour = start.getHours();
+  const targetMinute = start.getMinutes();
+  const targetSecond = start.getSeconds();
+  const targetMs = start.getMilliseconds();
+
+  // Create a candidate starting from fromDate, set to the target execution time
+  const candidate = new Date(fromDate);
+  candidate.setHours(targetHour, targetMinute, targetSecond, targetMs);
+
+  // If the target execution time for today has already passed, the earliest candidate is tomorrow
+  if (candidate <= fromDate) {
+    candidate.setDate(candidate.getDate() + 1);
+  }
 
   if (frequency === 'giornaliera') {
     let allowedDays: number[] = [];
@@ -235,25 +253,24 @@ export function calculateNextRun(startDate: Date, frequency: string, freqDetails
     } catch {}
 
     if (allowedDays.length === 0) {
-      if (candidate <= fromDate) {
-        candidate.setDate(candidate.getDate() + 1);
-      }
       return candidate;
     }
 
-    while (candidate <= fromDate || !allowedDays.includes(candidate.getDay())) {
+    // Keep adding days until we hit a day of the week allowed by the user
+    while (!allowedDays.includes(candidate.getDay())) {
       candidate.setDate(candidate.getDate() + 1);
     }
     return candidate;
   }
 
   if (frequency === 'settimanale') {
-    let targetDay = 1; // Default Monday
+    let targetDay = 1; // Default Monday (1)
     try {
       if (freqDetails) targetDay = parseInt(freqDetails);
     } catch {}
 
-    while (candidate <= fromDate || candidate.getDay() !== targetDay) {
+    // Keep adding days until we match the configured day of the week
+    while (candidate.getDay() !== targetDay) {
       candidate.setDate(candidate.getDate() + 1);
     }
     return candidate;
@@ -265,13 +282,14 @@ export function calculateNextRun(startDate: Date, frequency: string, freqDetails
       if (freqDetails) targetDay = parseInt(freqDetails);
     } catch {}
 
-    while (candidate <= fromDate || candidate.getDate() !== targetDay) {
+    // Keep adding days until we match the day of the month (e.g. the 15th)
+    while (candidate.getDate() !== targetDay) {
       candidate.setDate(candidate.getDate() + 1);
     }
     return candidate;
   }
 
-  candidate.setDate(candidate.getDate() + 1);
+  // Fallback: just add 1 day
   return candidate;
 }
 
