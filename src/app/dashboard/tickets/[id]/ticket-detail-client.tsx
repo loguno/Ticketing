@@ -4,6 +4,46 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+interface TriStateSwitchProps {
+  value: number;
+  onChange?: (value: number) => void;
+  readOnly?: boolean;
+}
+
+export function TriStateSwitch({ value, onChange, readOnly = false }: TriStateSwitchProps) {
+  const states = [
+    { val: 0, label: 'Nessuno', short: 'Ø', color: 'bg-slate-400 text-white' },
+    { val: 1, label: 'Spetta a me', short: 'Mio', color: 'bg-amber-500 text-white shadow-xs' },
+    { val: 2, label: 'Attesa risposta', short: 'Loro', color: 'bg-sky-500 text-white shadow-xs' }
+  ];
+
+  return (
+    <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-black/[0.05] items-center h-[24px]">
+      {states.map((opt) => {
+        const isActive = value === opt.val;
+        return (
+          <button
+            key={opt.val}
+            type="button"
+            onClick={() => !readOnly && onChange && onChange(opt.val)}
+            className={`px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide rounded-md transition-all flex items-center justify-center h-full ${
+              readOnly ? 'cursor-default' : 'cursor-pointer'
+            } ${
+              isActive
+                ? `${opt.color} text-[8.5px] scale-[1.03]`
+                : 'text-gray-400 hover:text-gray-650 bg-transparent'
+            }`}
+            title={opt.label}
+            disabled={readOnly}
+          >
+            {opt.short}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 interface UserInfo {
   id: string;
   name: string;
@@ -721,15 +761,13 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                 </div>
                 <div className="pt-3 flex justify-between gap-4 items-center">
                   <span className="text-gray-500 shrink-0">SPETTA RISPOSTA A:</span>
-                  <span>
-                    {(ticket.status === 'NUOVO' || ticket.status === 'IN_VALUTAZIONE' || ticket.status === 'IN_CARICO') ? (
-                      <span className="text-amber-700 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded text-[10px] font-bold uppercase">IT (Spetta a me)</span>
-                    ) : ticket.status === 'RISPOSTO' ? (
-                      <span className="text-sky-700 bg-sky-50 border border-sky-200/50 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Utente (Attesa risposta)</span>
-                    ) : (
-                      <span className="text-gray-400 font-bold">-</span>
-                    )}
-                  </span>
+                  <TriStateSwitch
+                    value={
+                      (ticket.status === 'NUOVO' || ticket.status === 'IN_VALUTAZIONE' || ticket.status === 'IN_CARICO') ? 1 :
+                      ticket.status === 'RISPOSTO' ? 2 : 0
+                    }
+                    readOnly={true}
+                  />
                 </div>
                 <div className="pt-3 flex justify-between gap-4 items-center">
                   <span className="text-gray-500 shrink-0">PRIORITÀ:</span>

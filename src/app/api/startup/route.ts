@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, clientProject, startDate, targetCompleteDate, boardType, subactivities } = body as {
+    const { title, description, clientProject, startDate, targetCompleteDate, boardType, subactivities, pendingResponse } = body as {
       title: string;
       description?: string;
       clientProject?: string;
@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       targetCompleteDate?: string;
       boardType?: import('@prisma/client').BoardType;
       subactivities?: SubactivityInput[];
+      pendingResponse?: number;
     };
 
     if (!title) {
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
         targetCompleteDate: targetCompleteDate ? new Date(targetCompleteDate) : null,
         status: 'NUOVO',
         boardType: boardType || 'STARTUP',
+        pendingResponse: pendingResponse !== undefined ? pendingResponse : 1,
         subactivities: {
           create: subactivities?.map((sub: SubactivityInput) => ({
             title: sub.title,

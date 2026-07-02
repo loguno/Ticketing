@@ -27,6 +27,7 @@ export default function StartupForm({ allUsers, boardType = 'STARTUP', onSuccess
   const [startDate, setStartDate] = useState('');
   const [targetCompleteDate, setTargetCompleteDate] = useState('');
   const [subactivities, setSubactivities] = useState<SubactivityInput[]>([]);
+  const [pendingResponse, setPendingResponse] = useState(1);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -98,6 +99,7 @@ export default function StartupForm({ allUsers, boardType = 'STARTUP', onSuccess
           startDate: startDate || null,
           targetCompleteDate: targetCompleteDate || null,
           boardType,
+          pendingResponse,
           subactivities: subactivities.map((sub) => ({
             title: sub.title.trim(),
             description: sub.description.trim() || null,
@@ -176,6 +178,33 @@ export default function StartupForm({ allUsers, boardType = 'STARTUP', onSuccess
             className="w-full bg-white border border-black/10 rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 focus:outline-none focus:border-[#11BCEC] transition-all"
             disabled={isLoading}
           />
+        </div>
+
+        <div>
+          <label className="block text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-1.5">
+            Competenza Risposta Iniziale
+          </label>
+          <div className="flex bg-gray-100 p-1.5 rounded-xl border border-black/[0.05] h-[42px] items-center">
+            {[
+              { val: 0, label: 'Nessuno' },
+              { val: 1, label: 'Spetta a me' },
+              { val: 2, label: 'Attesa loro' }
+            ].map((opt) => (
+              <button
+                key={opt.val}
+                type="button"
+                onClick={() => setPendingResponse(opt.val)}
+                className={`flex-1 text-center py-1.5 text-[9px] font-extrabold uppercase tracking-wide rounded-lg transition-all cursor-pointer h-full flex items-center justify-center ${
+                  pendingResponse === opt.val
+                    ? opt.val === 0 ? 'bg-slate-400 text-white' : opt.val === 1 ? 'bg-amber-500 text-white shadow-xs' : 'bg-sky-500 text-white shadow-xs'
+                    : 'text-gray-400 hover:text-gray-600 bg-transparent'
+                }`}
+                disabled={isLoading}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">

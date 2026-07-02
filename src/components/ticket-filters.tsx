@@ -8,6 +8,7 @@ interface TicketFiltersProps {
     priority: string;
     category: string;
     search: string;
+    responseStatus: string;
   }) => void;
   showStatusFilter?: boolean;
 }
@@ -17,15 +18,16 @@ export default function TicketFilters({ onFilterChange, showStatusFilter = true 
   const [priority, setPriority] = useState('');
   const [category, setCategory] = useState('');
   const [search, setSearch] = useState('');
+  const [responseStatus, setResponseStatus] = useState('');
 
   // Debounce search input to prevent excessive API calls
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      onFilterChange({ status, priority, category, search });
+      onFilterChange({ status, priority, category, search, responseStatus });
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [status, priority, category, search, onFilterChange]);
+  }, [status, priority, category, search, responseStatus, onFilterChange]);
 
   return (
     <div className="bg-white/80 backdrop-blur-md border border-black/10 rounded-xl p-4 gap-4 flex flex-col md:flex-row md:flex-wrap items-stretch md:items-end text-xs font-mono text-black shadow-sm">
@@ -63,6 +65,21 @@ export default function TicketFilters({ onFilterChange, showStatusFilter = true 
           </select>
         </div>
       )}
+
+      {/* Response Status Select */}
+      <div className="w-full md:w-[150px] shrink-0">
+        <label className="block text-gray-400 uppercase tracking-widest text-[9px] mb-1.5">[ RISPOSTA ]</label>
+        <select
+          value={responseStatus}
+          onChange={(e) => setResponseStatus(e.target.value)}
+          className="w-full bg-white border border-black/10 rounded-lg px-3 py-2 text-black focus:outline-none focus:border-[#11BCEC] transition-all cursor-pointer"
+        >
+          <option value="">Tutte</option>
+          <option value="1">Spetta a me</option>
+          <option value="2">Attesa risposta</option>
+          <option value="0">Nessuno</option>
+        </select>
+      </div>
 
       {/* Priority Select */}
       <div className="w-full md:w-[150px] shrink-0">
@@ -104,6 +121,7 @@ export default function TicketFilters({ onFilterChange, showStatusFilter = true 
             setPriority('');
             setCategory('');
             setSearch('');
+            setResponseStatus('');
           }}
           className="w-full md:w-auto bg-gray-100 hover:bg-gray-200 border border-black/10 rounded-lg px-4 py-2 text-gray-600 hover:text-black transition-all cursor-pointer uppercase font-bold text-[10px]"
         >
