@@ -35,6 +35,7 @@ interface StartupActivity {
   startDate: string | null;
   targetCompleteDate: string | null;
   status: 'NUOVO' | 'IN_LAVORAZIONE' | 'CONCLUSO' | 'SOSPESO' | 'ANNULLATO';
+  pendingResponse: number;
   createdAt: string;
   subactivities: Subactivity[];
 }
@@ -100,6 +101,21 @@ export default function StartupClient({ user, allUsers, boardType = 'STARTUP', t
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) throw new Error("Errore durante l'aggiornamento dello stato.");
+      fetchStartups();
+    } catch (err) {
+      alert(err || 'Errore');
+    }
+  };
+
+  // Handle pendingResponse update of Macro activity
+  const handleMacroResponseChange = async (id: string, newResponse: number) => {
+    try {
+      const res = await fetch(`/api/startup/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pendingResponse: newResponse }),
+      });
+      if (!res.ok) throw new Error("Errore durante l'aggiornamento dello stato di risposta.");
       fetchStartups();
     } catch (err) {
       alert(err || 'Errore');
@@ -364,11 +380,23 @@ export default function StartupClient({ user, allUsers, boardType = 'STARTUP', t
                               {/* Header Card: Client Project & Delete */}
                               <div className="flex justify-between items-start gap-2">
                                 <div className="min-w-0 flex-1">
-                                  {startup.clientProject && (
-                                    <span className="inline-block bg-slate-100 text-slate-700 rounded-lg px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider mb-1 truncate max-w-full">
-                                      {startup.clientProject}
-                                    </span>
-                                  )}
+                                  <div className="flex flex-wrap gap-1.5 items-center mb-1">
+                                    {startup.clientProject && (
+                                      <span className="inline-block bg-slate-100 text-slate-700 rounded-lg px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider truncate max-w-full">
+                                        {startup.clientProject}
+                                      </span>
+                                    )}
+                                    {startup.pendingResponse === 1 && (
+                                      <span className="inline-block bg-amber-50 text-amber-700 border border-amber-250 rounded-lg px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                                        ● Spetta a me
+                                      </span>
+                                    )}
+                                    {startup.pendingResponse === 2 && (
+                                      <span className="inline-block bg-sky-50 text-sky-700 border border-sky-200 rounded-lg px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                                        ● Attesa risposta
+                                      </span>
+                                    )}
+                                  </div>
                                   <h3 className="text-sm font-extrabold text-gray-900 font-sans tracking-tight group-hover:text-[#004B97] transition-colors leading-snug break-words">
                                     {startup.title}
                                   </h3>
@@ -490,21 +518,35 @@ export default function StartupClient({ user, allUsers, boardType = 'STARTUP', t
 
                             {/* Quick Status Mover Dropdown */}
                             {user.role !== 'STANDARD' && (
-                              <div className="border-t border-black/[0.05] pt-3 mt-3 flex justify-between items-center text-[10px] font-sans">
-                                <span className="text-gray-400 font-bold tracking-wider uppercase">Stato</span>
-                                <select
-                                  value={startup.status}
-                                  onChange={(e) => handleMacroStatusChange(startup.id, e.target.value as StartupActivity['status'])}
-                                  className="bg-slate-50 hover:bg-slate-100 border border-black/10 rounded-lg px-2.5 py-1 text-black font-semibold focus:outline-none focus:ring-2 focus:ring-[#11BCEC]/30 focus:border-[#11BCEC] transition-all cursor-pointer text-[10px]"
-                                >
-                                  <option value="NUOVO">Nuovo</option>
-                                  <option value="IN_LAVORAZIONE">In Corso</option>
-                                  <option value="SOSPESO">Sospeso</option>
-                                  <option value="CONCLUSO">Concluso</option>
-                                  <option value="ANNULLATO">Annullato</option>
-                                </select>
-                              </div>
-                            )}
+                               <div className="border-t border-black/[0.05] pt-3 mt-3 space-y-2">
+                                 <div className="flex justify-between items-center text-[10px] font-sans">
+                                   <span className="text-gray-400 font-bold tracking-wider uppercase">Stato</span>
+                                   <select
+                                     value={startup.status}
+                                     onChange={(e) => handleMacroStatusChange(startup.id, e.target.value as StartupActivity['status'])}
+                                     className="bg-slate-50 hover:bg-slate-100 border border-black/10 rounded-lg px-2.5 py-1 text-black font-semibold focus:outline-none focus:ring-2 focus:ring-[#11BCEC]/30 focus:border-[#11BCEC] transition-all cursor-pointer text-[10px]"
+                                   >
+                                     <option value="NUOVO">Nuovo</option>
+                                     <option value="IN_LAVORAZIONE">In Corso</option>
+                                     <option value="SOSPESO">Sospeso</option>
+                                     <option value="CONCLUSO">Concluso</option>
+                                     <option value="ANNULLATO">Annullato</option>
+                                   </select>
+                                 </div>
+                                 <div className="flex justify-between items-center text-[10px] font-sans">
+                                   <span className="text-gray-400 font-bold tracking-wider uppercase">Risposta</span>
+                                   <select
+                                     value={startup.pendingResponse ?? 1}
+                                     onChange={(e) => handleMacroResponseChange(startup.id, parseInt(e.target.value))}
+                                     className="bg-slate-50 hover:bg-slate-100 border border-black/10 rounded-lg px-2.5 py-1 text-black font-semibold focus:outline-none focus:ring-2 focus:ring-[#11BCEC]/30 focus:border-[#11BCEC] transition-all cursor-pointer text-[10px]"
+                                   >
+                                     <option value="0">Nessuno</option>
+                                     <option value="1">Spetta a me</option>
+                                     <option value="2">Attesa risposta</option>
+                                   </select>
+                                 </div>
+                               </div>
+                             )}
                           </div>
                         );
                       })}

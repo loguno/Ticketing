@@ -156,6 +156,7 @@ model StartupActivity {
   targetCompleteDate   DateTime?       // Data prevista completamento
   status               StartupStatus   @default(NUOVO)
   boardType            BoardType       @default(STARTUP)
+  pendingResponse      Int             @default(1)
   
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt

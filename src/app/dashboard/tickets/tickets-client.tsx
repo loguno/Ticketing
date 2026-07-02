@@ -344,6 +344,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                       <th className="p-4">[ OGGETTO / TITOLO ]</th>
                       <th className="p-4">[ CATEGORIA ]</th>
                       <th className="p-4">[ STATO ]</th>
+                      <th className="p-4">[ RISPOSTA ]</th>
                       <th className="p-4">[ PRIORITÀ ]</th>
                       <th className="p-4">[ DATA CREAZIONE ]</th>
                       {user.role !== 'STANDARD' && <th className="p-4">[ OPERATORE ]</th>}
@@ -378,6 +379,23 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                           <span className={`border px-2.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${statusStyles(ticket.status)}`}>
                             {statusLabel(ticket.status)}
                           </span>
+                        </td>
+                        <td className="p-4">
+                          {(ticket.status === 'NUOVO' || ticket.status === 'IN_VALUTAZIONE' || ticket.status === 'IN_CARICO') && (
+                            <span className="bg-amber-50 text-amber-750 border border-amber-200/50 rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                              ● Spetta a me
+                            </span>
+                          )}
+                          {ticket.status === 'RISPOSTO' && (
+                            <span className="bg-sky-50 text-sky-700 border border-sky-200/50 rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                              ● Attesa risposta
+                            </span>
+                          )}
+                          {!(ticket.status === 'NUOVO' || ticket.status === 'IN_VALUTAZIONE' || ticket.status === 'IN_CARICO' || ticket.status === 'RISPOSTO') && (
+                            <span className="text-gray-400 font-bold text-[10px] uppercase">
+                              -
+                            </span>
+                          )}
                         </td>
                         <td className="p-4">
                           <span className={`border px-2 py-0.5 rounded text-[10px] font-bold ${priorityStyles(ticket.priority)}`}>

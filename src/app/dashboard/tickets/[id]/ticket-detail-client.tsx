@@ -720,6 +720,18 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                   </span>
                 </div>
                 <div className="pt-3 flex justify-between gap-4 items-center">
+                  <span className="text-gray-500 shrink-0">SPETTA RISPOSTA A:</span>
+                  <span>
+                    {(ticket.status === 'NUOVO' || ticket.status === 'IN_VALUTAZIONE' || ticket.status === 'IN_CARICO') ? (
+                      <span className="text-amber-700 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded text-[10px] font-bold uppercase">IT (Spetta a me)</span>
+                    ) : ticket.status === 'RISPOSTO' ? (
+                      <span className="text-sky-700 bg-sky-50 border border-sky-200/50 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Utente (Attesa risposta)</span>
+                    ) : (
+                      <span className="text-gray-400 font-bold">-</span>
+                    )}
+                  </span>
+                </div>
+                <div className="pt-3 flex justify-between gap-4 items-center">
                   <span className="text-gray-500 shrink-0">PRIORITÀ:</span>
                   <span className="text-black font-bold truncate">{ticket.priority}</span>
                 </div>

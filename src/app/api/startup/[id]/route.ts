@@ -66,7 +66,7 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { title, description, clientProject, startDate, targetCompleteDate, status } = body;
+    const { title, description, clientProject, startDate, targetCompleteDate, status, pendingResponse } = body;
 
     const existing = await db.startupActivity.findUnique({
       where: { id },
@@ -88,6 +88,7 @@ export async function PUT(
         startDate: startDate !== undefined ? (startDate ? new Date(startDate) : null) : undefined,
         targetCompleteDate: targetCompleteDate !== undefined ? (targetCompleteDate ? new Date(targetCompleteDate) : null) : undefined,
         status: status !== undefined ? status : undefined,
+        pendingResponse: pendingResponse !== undefined ? pendingResponse : undefined,
       },
     });
 
