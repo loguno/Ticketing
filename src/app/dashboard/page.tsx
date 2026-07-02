@@ -294,7 +294,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
           >
-            Attività di Sviluppo (Kanban)
+            Attività di Sviluppo
           </Link>
         </div>
 
@@ -348,7 +348,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Donut — per Kanban/Board */}
               <div className="bg-white rounded-2xl border border-black/[0.07] p-6 shadow-xs">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-5">Attività per Kanban</h3>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-5">Attività per Area</h3>
                 <DonutChart data={devKanbanData} />
               </div>
 
