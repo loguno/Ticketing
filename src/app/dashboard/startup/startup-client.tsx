@@ -88,7 +88,7 @@ interface StartupClientProps {
   title?: string;
 }
 
-export default function StartupClient({ user, allUsers, boardType = 'STARTUP', title = 'Start Up IT' }: StartupClientProps) {
+export default function StartupClient({ user, allUsers, boardType = 'STARTUP', title = 'Start Up' }: StartupClientProps) {
   const [startups, setStartups] = useState<StartupActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);

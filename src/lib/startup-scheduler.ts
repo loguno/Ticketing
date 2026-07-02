@@ -105,7 +105,7 @@ export async function checkAndSendPeriodicReport() {
       COMPLETATA: 'Completata',
     };
 
-    let bodyText = `Riepilogo Periodico Attività Start Up IT - ${now.toLocaleDateString('it-IT')}\n\n`;
+    let bodyText = `Riepilogo Periodico Attività Start Up - ${now.toLocaleDateString('it-IT')}\n\n`;
     if (openStartups.length === 0) {
       bodyText += 'Non ci sono attività di startup aperte al momento.';
     } else {
@@ -133,7 +133,7 @@ export async function checkAndSendPeriodicReport() {
     }
 
     let bodyHtml = `
-      <p>Questo è il report periodico automatico delle attività di <strong>Start Up IT</strong> aperte, generato il ${now.toLocaleDateString('it-IT')}.</p>
+      <p>Questo è il report periodico automatico delle attività di <strong>Start Up</strong> aperte, generato il ${now.toLocaleDateString('it-IT')}.</p>
       <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
     `;
 

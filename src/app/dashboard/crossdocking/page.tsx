@@ -41,5 +41,5 @@ export default async function CrossDockingPage() {
     },
   });
 
-  return <StartupClient user={user} allUsers={allUsers} boardType="CROSS_DOCKING" title="Cross Docking IT" />;
+  return <StartupClient user={user} allUsers={allUsers} boardType="CROSS_DOCKING" title="Cross Docking" />;
 }

@@ -41,5 +41,5 @@ export default async function TmsPage() {
     },
   });
 
-  return <StartupClient user={user} allUsers={allUsers} boardType="TMS" title="TMS IT" />;
+  return <StartupClient user={user} allUsers={allUsers} boardType="TMS" title="TMS" />;
 }

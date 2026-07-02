@@ -41,5 +41,5 @@ export default async function WmsPage() {
     },
   });
 
-  return <StartupClient user={user} allUsers={allUsers} boardType="WMS" title="WMS IT" />;
+  return <StartupClient user={user} allUsers={allUsers} boardType="WMS" title="WMS" />;
 }
