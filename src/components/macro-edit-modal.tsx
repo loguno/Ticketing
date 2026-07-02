@@ -7,6 +7,7 @@ interface StartupActivity {
   clientProject: string | null;
   startDate: string | null;
   targetCompleteDate: string | null;
+  pendingResponse: number;
 }
 
 interface MacroEditModalProps {
@@ -19,6 +20,7 @@ interface MacroEditModalProps {
       description: string | null;
       startDate: string | null;
       targetCompleteDate: string | null;
+      pendingResponse: number;
     }
   ) => Promise<void>;
   onClose: () => void;
@@ -28,6 +30,7 @@ export default function MacroEditModal({ activity, onSave, onClose }: MacroEditM
   const [title, setTitle] = useState(activity.title);
   const [clientProject, setClientProject] = useState(activity.clientProject || '');
   const [description, setDescription] = useState(activity.description || '');
+  const [pendingResponse, setPendingResponse] = useState(activity.pendingResponse ?? 1);
   
   const [startDate, setStartDate] = useState(
     activity.startDate ? new Date(activity.startDate).toISOString().substring(0, 10) : ''
@@ -56,6 +59,7 @@ export default function MacroEditModal({ activity, onSave, onClose }: MacroEditM
         description: description.trim() || null,
         startDate: startDate || null,
         targetCompleteDate: targetCompleteDate || null,
+        pendingResponse,
       });
       onClose();
     } catch (err) {
@@ -120,6 +124,34 @@ export default function MacroEditModal({ activity, onSave, onClose }: MacroEditM
               className="w-full bg-white border border-black/10 rounded-lg px-3 py-2 text-sm text-black placeholder-gray-400 focus:outline-none focus:border-[#11BCEC] transition-all font-sans"
               disabled={isSaving}
             />
+          </div>
+
+          {/* Response status selector inside edit modal */}
+          <div>
+            <label className="block text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-1.5">
+              Competenza Risposta
+            </label>
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-black/[0.05] gap-1">
+              {[
+                { val: 1, label: 'Spetta a me', color: 'bg-amber-500 text-white shadow-xs' },
+                { val: 2, label: 'Attesa risposta', color: 'bg-sky-500 text-white shadow-xs' },
+                { val: 0, label: 'Nessuno', color: 'bg-slate-400 text-white shadow-xs' }
+              ].map((opt) => (
+                <button
+                  key={opt.val}
+                  type="button"
+                  onClick={() => setPendingResponse(opt.val)}
+                  className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all text-center cursor-pointer ${
+                    pendingResponse === opt.val
+                      ? `${opt.color} scale-[1.02]`
+                      : 'text-gray-450 hover:text-gray-700 bg-transparent'
+                  }`}
+                  disabled={isSaving}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

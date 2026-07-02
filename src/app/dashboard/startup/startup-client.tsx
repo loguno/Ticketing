@@ -174,6 +174,7 @@ export default function StartupClient({ user, allUsers, boardType = 'STARTUP', t
       description: string | null;
       startDate: string | null;
       targetCompleteDate: string | null;
+      pendingResponse: number;
     }
   ) => {
     try {
@@ -462,14 +463,7 @@ export default function StartupClient({ user, allUsers, boardType = 'STARTUP', t
                         return (
                           <div
                             key={startup.id}
-                            onClick={() => {
-                              if (user.role !== 'STANDARD') {
-                                setEditingMacro(startup);
-                              }
-                            }}
-                            className={`bg-white border border-black/[0.06] hover:border-black/[0.1] hover:shadow-md p-5 rounded-2xl space-y-4 transition-all relative group shadow-xs flex flex-col justify-between ${
-                              user.role !== 'STANDARD' ? 'cursor-pointer' : ''
-                            }`}
+                            className="bg-white border border-black/[0.06] hover:border-black/[0.1] hover:shadow-md p-5 rounded-2xl space-y-4 transition-all relative group shadow-xs flex flex-col justify-between"
                           >
                             <div className="space-y-3">
                               {/* Header Card: Client Project & Delete */}
