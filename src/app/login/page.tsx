@@ -88,7 +88,7 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#11BCEC]/30 bg-[#11BCEC]/5 text-xs text-[#004B97] font-mono tracking-wider uppercase mb-3 font-bold">
               <span className="h-2 w-2 rounded-full bg-[#11BCEC] animate-pulse"></span>
-              PORTALE TICKET IT
+              PORTALE TICKET
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-black uppercase font-sans">
               LOGISTICA UNO
@@ -195,7 +195,7 @@ export default function LoginPage() {
                   onClick={() => handleAutofill('helpdesk-op@azienda.it', 'HelpdeskPass123!')}
                   className="w-full bg-black/5 hover:bg-black/10 text-gray-700 border border-black/10 rounded-lg py-2 px-3 text-xs font-mono transition-all flex justify-between items-center cursor-pointer"
                 >
-                  <span>Operatore IT (HELPDESK)</span>
+                  <span>Operatore (HELPDESK)</span>
                   <span className="text-gray-500 font-sans">Seleziona &rarr;</span>
                 </button>
                 <button

@@ -203,7 +203,7 @@ export async function POST(
         to: ticket.contact,
         ticketNumber: ticket.ticketNumber,
         subject: `Nuova comunicazione sul Ticket [${ticket.ticketNumber}]`,
-        bodyText: `Gentile utente,\n\nha ricevuto una nuova risposta da parte del supporto per il ticket ${ticket.ticketNumber} ("${ticket.title}"):\n\n---\n${body}\n---\n\nSi prega di NON rispondere a questa e-mail. Acceda al portale per visualizzare lo storico e rispondere.\n\nCordiali saluti,\nSupporto IT Logistica Uno`,
+        bodyText: `Gentile utente,\n\nha ricevuto una nuova risposta da parte del supporto per il ticket ${ticket.ticketNumber} ("${ticket.title}"):\n\n---\n${body}\n---\n\nSi prega di NON rispondere a questa e-mail. Acceda al portale per visualizzare lo storico e rispondere.\n\nCordiali saluti,\nSupporto Logistica Uno`,
         bodyHtml: `
           <p>Gentile utente,</p>
           <p>ha ricevuto una nuova risposta da parte del supporto per il ticket <strong>${ticket.ticketNumber}</strong> ("<em>${ticket.title}</em>"):</p>
@@ -212,7 +212,7 @@ export async function POST(
           </blockquote>
           <p>Si prega di <strong>non rispondere direttamente a questa e-mail</strong>. Per visualizzare lo storico o inviare una risposta, acceda alla sua dashboard cliccando sul pulsante sottostante.</p>
           <br>
-          <p>Cordiali saluti,<br>Supporto IT Logistica Uno</p>
+          <p>Cordiali saluti,<br>Supporto Logistica Uno</p>
         `,
         ticketId: ticket.id,
       }).catch((emailError) => {

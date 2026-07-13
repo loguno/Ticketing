@@ -125,7 +125,7 @@ export default function IdeasClient({ operators }: IdeasClientProps) {
           <div>
             <p className="text-xs font-mono text-[#004B97] uppercase tracking-widest mb-1">Operativo</p>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">Nuove Idee e Suggerimenti</h1>
-            <p className="text-sm text-gray-500 mt-1">Raccolta e coordinamento delle proposte di miglioramento IT</p>
+            <p className="text-sm text-gray-500 mt-1">Raccolta e coordinamento delle proposte di miglioramento</p>
           </div>
         </div>
 

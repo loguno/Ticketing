@@ -88,7 +88,7 @@ export default function TicketForm({ onSuccess, onCancel, userEmail }: TicketFor
         <span className="font-mono text-[10px] text-[#004B97] tracking-widest uppercase block mb-1 font-bold">
           [ NUOVA SEGNALAZIONE ]
         </span>
-        <h3 className="text-xl font-bold uppercase tracking-tight text-black">Crea Nuovo Ticket IT</h3>
+        <h3 className="text-xl font-bold uppercase tracking-tight text-black">Crea Nuovo Ticket</h3>
       </div>
 
       {errorMessage && (

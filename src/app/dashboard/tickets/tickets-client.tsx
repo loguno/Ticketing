@@ -234,7 +234,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-mono text-[#004B97] uppercase tracking-widest mb-1">Operativo</p>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Ticket IT</h1>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Ticket</h1>
             <p className="text-sm text-gray-500 mt-1">Gestione e monitoraggio delle segnalazioni di assistenza</p>
           </div>
           <button

@@ -51,7 +51,7 @@ export async function sendTicketEmail({
   const defaultHtml = `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
       <div style="border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px;">
-        <h2 style="margin: 0; color: #1e3a8a; font-size: 1.5rem;">Portale Gestione Ticket IT</h2>
+        <h2 style="margin: 0; color: #1e3a8a; font-size: 1.5rem;">Portale Gestione Ticket</h2>
         <span style="font-size: 0.875rem; color: #64748b;">Riferimento Ticket: <strong>${ticketNumber}</strong></span>
       </div>
       <div style="line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem;">
@@ -93,7 +93,7 @@ export async function sendStartupEmail({
   const defaultHtml = `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
       <div style="border-bottom: 2px solid #ea580c; padding-bottom: 12px; margin-bottom: 20px;">
-        <h2 style="margin: 0; color: #7c2d12; font-size: 1.5rem;">Portale Gestione Attività IT</h2>
+        <h2 style="margin: 0; color: #7c2d12; font-size: 1.5rem;">Portale Gestione Attività</h2>
         <span style="font-size: 0.875rem; color: #ea580c; font-weight: bold; text-transform: uppercase;">Notifica Attività Start Up</span>
       </div>
       <div style="line-height: 1.6; margin-bottom: 24px; font-size: 0.95rem;">

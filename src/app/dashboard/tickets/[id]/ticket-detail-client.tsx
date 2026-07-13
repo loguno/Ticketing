@@ -310,7 +310,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
           <div className="font-mono text-xs text-gray-500 uppercase tracking-widest flex items-center gap-1.5 min-w-0">
             <span>Dashboard</span>
             <span className="text-gray-400">&bull;</span>
-            <Link href="/dashboard/tickets" className="hover:text-black transition-colors shrink-0">Ticket IT</Link>
+            <Link href="/dashboard/tickets" className="hover:text-black transition-colors shrink-0">Ticket</Link>
             <span className="text-gray-400">&bull;</span>
             <span className="text-[#004B97] font-bold truncate">{ticket.ticketNumber}</span>
           </div>
@@ -403,7 +403,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                                 ? 'bg-amber-100 text-amber-700 border-amber-200' 
                                 : 'bg-gray-100 text-gray-650 border-gray-200'
                             }`}>
-                              {isInternal ? 'NOTA INTERNA IT' : (msg.sender?.role || 'UTENTE')}
+                              {isInternal ? 'NOTA INTERNA' : (msg.sender?.role || 'UTENTE')}
                             </span>
                           </div>
                           <span className="shrink-0 text-gray-400">
@@ -647,7 +647,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
 
                   {/* Assigned Operator */}
                   <div className="space-y-1">
-                    <label htmlFor="t-operator" className="block text-gray-400 uppercase tracking-widest text-[9px]">Operatore IT Assegnato</label>
+                    <label htmlFor="t-operator" className="block text-gray-400 uppercase tracking-widest text-[9px]">Operatore Assegnato</label>
                     <select
                       id="t-operator"
                       value={operatorId}

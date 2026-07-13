@@ -96,7 +96,7 @@ export default function Sidebar({ user, width }: SidebarProps) {
       sectionLabel: 'SEGNALAZIONI UTENTI',
       items: [
         {
-          name: 'Ticket IT',
+          name: 'Ticket',
           href: '/dashboard/tickets',
           icon: iconTicket,
         },
@@ -183,7 +183,7 @@ export default function Sidebar({ user, width }: SidebarProps) {
               Logistica Uno
             </h2>
             <span className="text-[10px] font-mono text-white/50 tracking-widest uppercase mt-0.5 block">
-              PORTALE IT
+              PORTALE
             </span>
           </div>
         </div>

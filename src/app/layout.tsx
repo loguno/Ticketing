@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Portale Ticket IT — Gestione Interna',
-  description: 'Sistema di gestione ticket, attività di avviamento e idee di sviluppo IT aziendale.',
+  title: 'Portale Ticket — Gestione Interna',
+  description: 'Sistema di gestione ticket, attività di avviamento e idee di sviluppo aziendale.',
 };
 
 export default function RootLayout({

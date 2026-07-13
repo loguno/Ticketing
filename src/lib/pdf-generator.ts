@@ -88,7 +88,7 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
       doc.fillColor(primaryColor)
          .font('Helvetica-Bold')
          .fontSize(22)
-         .text('REPORT ATTIVITÀ IT - RIEPILOGO GENERALE', { align: 'left' });
+         .text('REPORT ATTIVITÀ - RIEPILOGO GENERALE', { align: 'left' });
 
       doc.fillColor(darkColor)
          .font('Helvetica')
@@ -407,7 +407,7 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
         doc.fillColor(darkColor)
            .font('Helvetica')
            .fontSize(9)
-           .text('Elenco storico delle attività completate con successo dal servizio IT', { align: 'left' })
+           .text('Elenco storico delle attività completate con successo', { align: 'left' })
            .moveDown(1.5);
 
         completedActivities.forEach((activity, idx) => {
@@ -470,7 +470,7 @@ export function generateActivitiesPdf(activities: Activity[]): Promise<Buffer> {
            .fontSize(8);
         
         doc.text(
-          `SISTEMA TICKET INTERNI - REPORT ATTIVITÀ IT // Pagina ${i + 1} di ${pages.count}`,
+          `SISTEMA TICKET INTERNI - REPORT ATTIVITÀ // Pagina ${i + 1} di ${pages.count}`,
           margin,
           550,
           { align: 'center', width: contentWidth }

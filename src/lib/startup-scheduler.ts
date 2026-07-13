@@ -331,9 +331,9 @@ export async function runReportSchedule(scheduleId: string, isTest: boolean = fa
     // 3. Send email with PDF attachment
     const subject = isTest
       ? `[TEST REPORT] ${schedule.name} - ${new Date().toLocaleDateString('it-IT')}`
-      : `[REPORT IT] ${schedule.name} - ${new Date().toLocaleDateString('it-IT')}`;
+      : `[REPORT] ${schedule.name} - ${new Date().toLocaleDateString('it-IT')}`;
 
-    const bodyText = `Gentile utente,\n\nin allegato trovi il report periodico delle attività di sviluppo in formato PDF.\n\nNome Schedulazione: ${schedule.name}\nFiltri applicati:\n- Tipologie attività: ${schedule.boardTypes}\n- Progetto/Cliente: ${schedule.clientProject}\n\nQuesto messaggio è stato generato in modo automatico dal portale IT.`;
+    const bodyText = `Gentile utente,\n\nin allegato trovi il report periodico delle attività di sviluppo in formato PDF.\n\nNome Schedulazione: ${schedule.name}\nFiltri applicati:\n- Tipologie attività: ${schedule.boardTypes}\n- Progetto/Cliente: ${schedule.clientProject}\n\nQuesto messaggio è stato generato in modo automatico dal portale.`;
 
     await sendReportEmail({
       to: schedule.emails,
