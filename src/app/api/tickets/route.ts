@@ -5,7 +5,9 @@ import fs from 'fs';
 import path from 'path';
 import { TicketCategory, TicketStatus, TicketPriority } from '@prisma/client';
 
-const ATTACHMENTS_DIR = process.env.ATTACHMENTS_DIR || './attachments';
+const ATTACHMENTS_DIR = process.env.VERCEL
+  ? '/tmp/attachments'
+  : (process.env.ATTACHMENTS_DIR || './attachments');
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id');
@@ -118,8 +120,12 @@ export async function POST(request: Request) {
     const ticketNumber = await generateTicketNumber();
 
     // Verify attachments directory exists
-    if (!fs.existsSync(ATTACHMENTS_DIR)) {
-      fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+    try {
+      if (!fs.existsSync(ATTACHMENTS_DIR)) {
+        fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+      }
+    } catch (e) {
+      console.warn(`Could not create attachments directory ${ATTACHMENTS_DIR}:`, e);
     }
 
     // Process files and check format and size limitations

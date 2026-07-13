@@ -5,7 +5,9 @@ import fs from 'fs';
 import path from 'path';
 import { MessageType } from '@prisma/client';
 
-const ATTACHMENTS_DIR = process.env.ATTACHMENTS_DIR || './attachments';
+const ATTACHMENTS_DIR = process.env.VERCEL
+  ? '/tmp/attachments'
+  : (process.env.ATTACHMENTS_DIR || './attachments');
 
 export async function GET(
   request: Request,
@@ -121,8 +123,12 @@ export async function POST(
       type = 'USER_COMMUNICATION'; // Force standard users to post public communications
     }
 
-    if (!fs.existsSync(ATTACHMENTS_DIR)) {
-      fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+    try {
+      if (!fs.existsSync(ATTACHMENTS_DIR)) {
+        fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+      }
+    } catch (e) {
+      console.warn(`Could not create attachments directory ${ATTACHMENTS_DIR}:`, e);
     }
 
     // Process files and check size/format
