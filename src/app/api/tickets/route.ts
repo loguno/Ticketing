@@ -185,8 +185,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ticket }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[API Tickets POST] Error creating ticket:', error);
-    return NextResponse.json({ error: 'Errore interno del server durante la creazione del ticket.' }, { status: 500 });
+    return NextResponse.json({ 
+      error: `Errore interno del server: ${error?.message || String(error)}`,
+      stack: error?.stack 
+    }, { status: 500 });
   }
 }
