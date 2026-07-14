@@ -154,7 +154,7 @@ export async function POST(
 
       // Overwrite strategy: save with exact original filename
       const filename = file.name;
-      const filePath = path.join(ATTACHMENTS_DIR, filename);
+      const filePath = path.join(ATTACHMENTS_DIR, filename).replace(/\\/g, '/');
       const buffer = Buffer.from(await file.arrayBuffer());
 
       fs.writeFileSync(filePath, buffer);

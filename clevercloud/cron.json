@@ -1,0 +1,6 @@
+[
+  {
+    "schedule": "0 */12 * * *",
+    "command": "node scripts/wake-db.js"
+  }
+]

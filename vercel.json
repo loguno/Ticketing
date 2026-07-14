@@ -5,5 +5,11 @@
   "outputDirectory": ".next",
   "env": {
     "PRISMA_GENERATE_NO_ENGINE": "1"
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/ping",
+      "schedule": "0 */12 * * *"
+    }
+  ]
 }

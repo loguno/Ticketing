@@ -431,7 +431,7 @@ export default function TicketDetailClient({ user, ticketId, initialOperators }:
                                 href={`/api/attachments/${file.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-55 hover:bg-gray-100 border border-black/10 rounded-md text-[10px] text-gray-600 hover:text-black transition-all font-mono max-w-full truncate"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 hover:bg-gray-100 border border-black/10 rounded-md text-[10px] text-gray-600 hover:text-black transition-all font-mono max-w-full truncate"
                               >
                                 <svg className="h-2.5 w-2.5 text-[#11BCEC] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3" />

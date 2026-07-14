@@ -53,11 +53,29 @@ export async function GET(
     }
 
     // Verify file exists on disk
-    if (!fs.existsSync(attachment.filePath)) {
+    let fileExists = fs.existsSync(attachment.filePath);
+    let finalPath = attachment.filePath;
+
+    if (!fileExists) {
+      // Normalize slashes for cross-platform compatibility
+      const normalizedPath = attachment.filePath.replace(/\\/g, '/');
+      if (fs.existsSync(normalizedPath)) {
+        fileExists = true;
+        finalPath = normalizedPath;
+      } else {
+        const backslashPath = attachment.filePath.replace(/\//g, '\\');
+        if (fs.existsSync(backslashPath)) {
+          fileExists = true;
+          finalPath = backslashPath;
+        }
+      }
+    }
+
+    if (!fileExists) {
       return NextResponse.json({ error: 'File fisico non trovato sul server.' }, { status: 404 });
     }
 
-    const fileBuffer = fs.readFileSync(attachment.filePath);
+    const fileBuffer = fs.readFileSync(finalPath);
     
     // Set headers for inline preview or download
     const headers = new Headers();

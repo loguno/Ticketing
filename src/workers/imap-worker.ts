@@ -44,7 +44,7 @@ async function parseAndSaveAttachments(attachments: MailAttachment[], ticketId: 
     }
 
     const filename = att.filename || 'attachment';
-    const filePath = path.join(ATTACHMENTS_DIR, filename);
+    const filePath = path.join(ATTACHMENTS_DIR, filename).replace(/\\/g, '/');
 
     // Save the file buffer to disk (will overwrite if exists)
     fs.writeFileSync(filePath, att.content);

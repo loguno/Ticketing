@@ -603,7 +603,7 @@ export default function SchedulesClient({ projectList }: SchedulesClientProps) {
               {/* Filters (Development boards selection) */}
               <div className="space-y-1.5">
                 <label className="block text-gray-500 uppercase tracking-wider font-bold">Attività di sviluppo da includere *</label>
-                <div className="grid grid-cols-2 gap-2 bg-gray-55/40 border border-black/[0.05] rounded-xl p-3 text-[11px] font-sans">
+                <div className="grid grid-cols-2 gap-2 bg-gray-50/40 border border-black/[0.05] rounded-xl p-3 text-[11px] font-sans">
                   {['STARTUP', 'WMS', 'TMS', 'CROSS_DOCKING'].map((type) => (
                     <label key={type} className="flex items-center gap-2 cursor-pointer select-none">
                       <input

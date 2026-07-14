@@ -197,7 +197,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
       IN_CARICO: 'bg-amber-50 text-amber-800 border-amber-200/50',
       RISPOSTO: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
       RISOLTO: 'bg-emerald-50 text-emerald-700 border-emerald-200/50',
-      CHIUSO: 'bg-gray-55 text-gray-650 border-gray-200',
+      CHIUSO: 'bg-gray-50 text-gray-650 border-gray-200',
       NON_RISOLVIBILE: 'bg-gray-100 text-gray-500 border-gray-300',
       ANNULLATO: 'bg-red-50 text-red-700 border-red-200/50',
       SOSPESO: 'bg-slate-50 text-slate-700 border-slate-200',

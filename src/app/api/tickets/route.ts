@@ -151,7 +151,7 @@ export async function POST(request: Request) {
 
       // Overwrite strategy: save with exact original filename
       const filename = file.name;
-      const filePath = path.join(ATTACHMENTS_DIR, filename);
+      const filePath = path.join(ATTACHMENTS_DIR, filename).replace(/\\/g, '/');
       const buffer = Buffer.from(await file.arrayBuffer());
 
       fs.writeFileSync(filePath, buffer);
@@ -185,11 +185,13 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ticket }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('[API Tickets POST] Error creating ticket:', error);
     return NextResponse.json({ 
-      error: `Errore interno del server: ${error?.message || String(error)}`,
-      stack: error?.stack 
+      error: `Errore interno del server: ${errorMsg}`,
+      stack: errorStack 
     }, { status: 500 });
   }
 }
