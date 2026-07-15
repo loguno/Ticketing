@@ -2,5 +2,9 @@
   {
     "schedule": "0 */12 * * *",
     "command": "node scripts/wake-db.js"
+  },
+  {
+    "schedule": "0 * * * *",
+    "command": "node scripts/trigger-scheduler.js"
   }
 ]

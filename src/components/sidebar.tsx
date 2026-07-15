@@ -75,10 +75,38 @@ const iconSchedule = (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
+const iconCompetenze = (
+  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+  </svg>
+);
 
 
 export default function Sidebar({ user, width }: SidebarProps) {
   const pathname = usePathname();
+  const [spettaCount, setSpettaCount] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (user.role === 'STANDARD') return;
+    
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/competenze');
+        if (res.ok) {
+          const json = await res.json();
+          setSpettaCount(json?.counts?.spettaAMe || 0);
+        }
+      } catch (err) {
+        console.error('Error fetching count for sidebar:', err);
+      }
+    };
+
+    fetchCount();
+    
+    // Refresh count every 2 minutes
+    const interval = setInterval(fetchCount, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user.role]);
 
   const navSections: NavSection[] = [
     {
@@ -88,6 +116,12 @@ export default function Sidebar({ user, width }: SidebarProps) {
           name: 'Dashboard',
           href: '/dashboard',
           icon: iconDashboard,
+          roles: ['ADMIN', 'HELPDESK'],
+        },
+        {
+          name: 'Le Mie Attività',
+          href: '/dashboard/competenze',
+          icon: iconCompetenze,
           roles: ['ADMIN', 'HELPDESK'],
         },
       ],
@@ -220,6 +254,11 @@ export default function Sidebar({ user, width }: SidebarProps) {
                       {item.icon}
                     </span>
                     <span className="truncate">{item.name}</span>
+                    {item.name === 'Le Mie Attività' && spettaCount !== null && spettaCount > 0 && (
+                      <span className="ml-2 px-1.5 py-0.5 text-[9px] font-black bg-amber-500 text-white rounded-full leading-none shrink-0 border border-white/10 shadow-xs">
+                        {spettaCount}
+                      </span>
+                    )}
                     {active && (
                       <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#11BCEC] shrink-0" />
                     )}

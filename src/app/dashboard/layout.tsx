@@ -9,8 +9,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Start background periodic report scheduler on server load
-  initStartupScheduler();
+  // Start background periodic report scheduler only in development mode
+  if (process.env.NODE_ENV === 'development') {
+    initStartupScheduler();
+  }
 
   const headersList = await headers();
   const userId = headersList.get('x-user-id');
