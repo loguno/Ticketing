@@ -369,7 +369,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
 
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             <div className="flex-grow">
-              <TicketFilters onFilterChange={handleFilterChange} showStatusFilter={activeTab !== 'triage'} />
+              <TicketFilters onFilterChange={handleFilterChange} showStatusFilter={activeTab !== 'triage'} showResponseFilter={user.role !== 'STANDARD'} />
             </div>
             <button
               onClick={() => fetchTickets()}
@@ -403,7 +403,7 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                       <th className="p-4">[ OGGETTO / TITOLO ]</th>
                       <th className="p-4">[ CATEGORIA ]</th>
                       <th className="p-4">[ STATO ]</th>
-                      <th className="p-4">[ RISPOSTA ]</th>
+                      {user.role !== 'STANDARD' && <th className="p-4">[ RISPOSTA ]</th>}
                       <th className="p-4">[ PRIORITÀ ]</th>
                       <th className="p-4">[ DATA CREAZIONE ]</th>
                       {user.role !== 'STANDARD' && <th className="p-4">[ OPERATORE ]</th>}
@@ -439,15 +439,17 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                             {statusLabel(ticket.status)}
                           </span>
                         </td>
-                        <td className="p-4">
-                          <TriStateSwitch
-                            value={
-                              (ticket.status === 'NUOVO' || ticket.status === 'IN_VALUTAZIONE' || ticket.status === 'IN_CARICO') ? 1 :
-                              ticket.status === 'RISPOSTO' ? 2 : 0
-                            }
-                            readOnly={true}
-                          />
-                        </td>
+                        {user.role !== 'STANDARD' && (
+                          <td className="p-4">
+                            <TriStateSwitch
+                              value={
+                                (ticket.status === 'NUOVO' || ticket.status === 'IN_VALUTAZIONE' || ticket.status === 'IN_CARICO') ? 1 :
+                                ticket.status === 'RISPOSTO' ? 2 : 0
+                              }
+                              readOnly={true}
+                            />
+                          </td>
+                        )}
                         <td className="p-4">
                           <span className={`border px-2 py-0.5 rounded text-[10px] font-bold ${priorityStyles(ticket.priority)}`}>
                             {priorityLabel(ticket.priority)}

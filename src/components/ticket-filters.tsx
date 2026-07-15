@@ -11,9 +11,14 @@ interface TicketFiltersProps {
     responseStatus: string;
   }) => void;
   showStatusFilter?: boolean;
+  showResponseFilter?: boolean;
 }
 
-export default function TicketFilters({ onFilterChange, showStatusFilter = true }: TicketFiltersProps) {
+export default function TicketFilters({ 
+  onFilterChange, 
+  showStatusFilter = true,
+  showResponseFilter = true
+}: TicketFiltersProps) {
   const [status, setStatus] = useState('');
   const [priority, setPriority] = useState('');
   const [category, setCategory] = useState('');
@@ -67,19 +72,21 @@ export default function TicketFilters({ onFilterChange, showStatusFilter = true 
       )}
 
       {/* Response Status Select */}
-      <div className="w-full md:w-[150px] shrink-0">
-        <label className="block text-gray-400 uppercase tracking-widest text-[9px] mb-1.5">[ RISPOSTA ]</label>
-        <select
-          value={responseStatus}
-          onChange={(e) => setResponseStatus(e.target.value)}
-          className="w-full bg-white border border-black/10 rounded-lg px-3 py-2 text-black focus:outline-none focus:border-[#11BCEC] transition-all cursor-pointer"
-        >
-          <option value="">Tutte</option>
-          <option value="1">Spetta a me</option>
-          <option value="2">Attesa risposta</option>
-          <option value="0">Nessuno</option>
-        </select>
-      </div>
+      {showResponseFilter && (
+        <div className="w-full md:w-[150px] shrink-0">
+          <label className="block text-gray-400 uppercase tracking-widest text-[9px] mb-1.5">[ RISPOSTA ]</label>
+          <select
+            value={responseStatus}
+            onChange={(e) => setResponseStatus(e.target.value)}
+            className="w-full bg-white border border-black/10 rounded-lg px-3 py-2 text-black focus:outline-none focus:border-[#11BCEC] transition-all cursor-pointer"
+          >
+            <option value="">Tutte</option>
+            <option value="1">Spetta a me</option>
+            <option value="2">Attesa risposta</option>
+            <option value="0">Nessuno</option>
+          </select>
+        </div>
+      )}
 
       {/* Priority Select */}
       <div className="w-full md:w-[150px] shrink-0">
