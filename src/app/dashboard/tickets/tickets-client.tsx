@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import TicketFilters from '@/components/ticket-filters';
 import TicketForm from '@/components/ticket-form';
+import AdminDeleteModal from '@/components/admin-delete-modal';
 
 interface TriStateSwitchProps {
   value: number;
@@ -79,6 +80,14 @@ export default function TicketsClient({ user }: TicketsClientProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'triage'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Admin bulk delete state
+  const [selectedTicketIds, setSelectedTicketIds] = useState<string[]>([]);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
+  const [bulkDeleteSuccess, setBulkDeleteSuccess] = useState<string | null>(null);
+
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
@@ -170,6 +179,51 @@ export default function TicketsClient({ user }: TicketsClientProps) {
 
     return true;
   });
+
+  const isAllSelected =
+    displayedTickets.length > 0 && displayedTickets.every((t) => selectedTicketIds.includes(t.id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedTicketIds([]);
+    } else {
+      setSelectedTicketIds(displayedTickets.map((t) => t.id));
+    }
+  };
+
+  const handleToggleSelectTicket = (id: string) => {
+    setSelectedTicketIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTicketIds.length === 0) return;
+    setIsBulkDeleting(true);
+    setBulkDeleteError(null);
+    try {
+      const res = await fetch('/api/tickets', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedTicketIds }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Errore durante l\'eliminazione dei ticket.');
+      }
+      const count = data.count ?? selectedTicketIds.length;
+      setSelectedTicketIds([]);
+      setShowBulkDeleteModal(false);
+      setBulkDeleteSuccess(`${count} ticket eliminati definitivamente.`);
+      setTimeout(() => setBulkDeleteSuccess(null), 5000);
+      await fetchTickets();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Errore imprevisto.';
+      setBulkDeleteError(msg);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
 
   const triageCount = tickets.filter((t) => t.status === 'NUOVO').length;
   const openTicketsCount = tickets.filter((t) => t.status === 'NUOVO' || t.status === 'IN_VALUTAZIONE' || t.status === 'IN_CARICO' || t.status === 'RISPOSTO' || t.status === 'SOSPESO').length;
@@ -383,6 +437,58 @@ export default function TicketsClient({ user }: TicketsClientProps) {
             </button>
           </div>
 
+          {/* Admin Bulk Action Bar */}
+          {user.role === 'ADMIN' && selectedTicketIds.length > 0 && (
+            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-700 font-black font-mono text-xs shrink-0">
+                  {selectedTicketIds.length}
+                </span>
+                <div>
+                  <p className="text-xs font-mono font-bold uppercase text-red-950">
+                    {selectedTicketIds.length === 1
+                      ? '1 Ticket selezionato'
+                      : `${selectedTicketIds.length} Ticket selezionati`}
+                  </p>
+                  <p className="text-[11px] text-red-700/80">
+                    Operazione amministrativa di pulizia archivio
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTicketIds([])}
+                  className="px-3.5 py-2 text-xs font-mono font-bold uppercase text-gray-650 hover:text-black bg-white hover:bg-gray-100 border border-black/10 rounded-xl transition-all cursor-pointer shadow-2xs"
+                >
+                  Deseleziona
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteModal(true)}
+                  className="px-4 py-2 text-xs font-mono font-bold uppercase text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="w-3.5 h-3.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                    />
+                  </svg>
+                  <span>Elimina selezionati ({selectedTicketIds.length})</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Table Container */}
           <div className="bg-white border border-black/[0.07] rounded-2xl overflow-hidden shadow-xs">
             {isLoading ? (
@@ -399,6 +505,17 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                 <table className="w-full text-left border-collapse text-xs font-mono text-black">
                   <thead>
                     <tr className="border-b border-black/15 text-gray-500 uppercase tracking-wider bg-gray-50/75">
+                      {user.role === 'ADMIN' && (
+                        <th className="p-4 w-12 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isAllSelected}
+                            onChange={handleToggleSelectAll}
+                            className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600"
+                            title="Seleziona tutti i ticket visualizzati"
+                          />
+                        </th>
+                      )}
                       <th className="p-4">[ NUMERO ]</th>
                       <th className="p-4">[ OGGETTO / TITOLO ]</th>
                       <th className="p-4">[ CATEGORIA ]</th>
@@ -414,8 +531,21 @@ export default function TicketsClient({ user }: TicketsClientProps) {
                       <tr
                         key={ticket.id}
                         onClick={() => router.push(`/dashboard/tickets/${ticket.id}`)}
-                        className="hover:bg-black/[0.015] transition-colors cursor-pointer"
+                        className={`hover:bg-black/[0.015] transition-colors cursor-pointer ${
+                          selectedTicketIds.includes(ticket.id) ? 'bg-red-50/30' : ''
+                        }`}
                       >
+                        {user.role === 'ADMIN' && (
+                          <td className="p-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedTicketIds.includes(ticket.id)}
+                              onChange={() => handleToggleSelectTicket(ticket.id)}
+                              className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600"
+                              title={`Seleziona ${ticket.ticketNumber}`}
+                            />
+                          </td>
+                        )}
                         <td className="p-4 font-bold text-black">
                           {ticket.ticketNumber}
                         </td>
@@ -498,6 +628,35 @@ export default function TicketsClient({ user }: TicketsClientProps) {
             />
           </div>
         </div>
+      )}
+
+      {/* Bulk Delete Success Notification */}
+      {bulkDeleteSuccess && (
+        <div className="fixed top-6 right-6 z-50 bg-[#10B981] text-white px-5 py-4 rounded-xl shadow-lg flex items-center gap-3 font-sans text-xs border border-emerald-500/30 transition-all duration-300 animate-fadeIn">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="font-bold leading-tight uppercase tracking-wider">{bulkDeleteSuccess}</span>
+        </div>
+      )}
+
+      {/* Admin Bulk Delete Modal */}
+      {user.role === 'ADMIN' && (
+        <AdminDeleteModal
+          isOpen={showBulkDeleteModal}
+          onClose={() => {
+            if (!isBulkDeleting) {
+              setShowBulkDeleteModal(false);
+              setBulkDeleteError(null);
+            }
+          }}
+          onConfirm={handleBulkDelete}
+          isDeleting={isBulkDeleting}
+          title={`Eliminazione definitiva di ${selectedTicketIds.length} ${selectedTicketIds.length === 1 ? 'ticket' : 'ticket'}`}
+          description={`Stai per eliminare ${selectedTicketIds.length} ticket selezionati. Tutti i record, i messaggi/note interne e tutti gli allegati salvati fisicamente su server verranno rimossi per sempre.`}
+          ticketNumbers={tickets.filter((t) => selectedTicketIds.includes(t.id)).map((t) => t.ticketNumber)}
+          errorMessage={bulkDeleteError}
+        />
       )}
 
       {/* Footer */}
