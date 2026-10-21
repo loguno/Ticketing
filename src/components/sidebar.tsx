@@ -270,6 +270,31 @@ export default function Sidebar({ user, width }: SidebarProps) {
         })}
       </nav>
 
+      {/* Assistente AI Quick Launcher */}
+      <div className="px-3 pb-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('open-ai-assistant', { detail: { prompt: 'Genera To-Do di Oggi' } })
+              );
+            }
+          }}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold bg-[#0f172a]/70 hover:bg-[#0f172a] text-amber-300 hover:text-amber-200 border border-amber-400/30 hover:border-amber-400/60 shadow-xs transition-all cursor-pointer group"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-md bg-amber-400 text-slate-950 flex items-center justify-center font-black text-[10px] group-hover:scale-105 transition-transform">
+              AI
+            </span>
+            <span className="truncate">Assistente Ticket</span>
+          </div>
+          <span className="text-[10px] text-amber-400 font-mono tracking-wider opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+            Briefing &rarr;
+          </span>
+        </button>
+      </div>
+
       {/* User profile + logout */}
       <div className="px-3 pb-4 pt-3 border-t border-white/10 space-y-3">
         <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl border border-white/10">

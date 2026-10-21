@@ -195,3 +195,101 @@ export async function POST(request: Request) {
     }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  const userId = request.headers.get('x-user-id');
+  const userRole = request.headers.get('x-user-role');
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Non autenticato.' }, { status: 401 });
+  }
+
+  // Strict check: Only ADMIN can delete tickets
+  if (userRole !== 'ADMIN') {
+    return NextResponse.json({ error: 'Accesso negato. Solo gli amministratori possono eliminare i ticket.' }, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const { ids } = body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'Specificare almeno un ID ticket da eliminare.' }, { status: 400 });
+    }
+
+    // Retrieve all existing tickets matching the given IDs
+    const tickets = await db.ticket.findMany({
+      where: { id: { in: ids } },
+      include: {
+        attachments: true,
+        messages: {
+          include: {
+            attachments: true,
+          },
+        },
+      },
+    });
+
+    if (tickets.length === 0) {
+      return NextResponse.json({
+        success: true,
+        count: 0,
+        message: 'Nessun ticket corrispondente trovato da eliminare.',
+      });
+    }
+
+    const existingIds = tickets.map((t) => t.id);
+
+    // Collect all attachment file paths
+    const filePaths: string[] = [];
+    tickets.forEach((t) => {
+      t.attachments.forEach((att) => {
+        if (att.filePath) filePaths.push(att.filePath);
+      });
+      t.messages.forEach((msg) => {
+        msg.attachments.forEach((att) => {
+          if (att.filePath) filePaths.push(att.filePath);
+        });
+      });
+    });
+
+    // Tolerant filesystem deletion: missing or locked files will not block database cleanup
+    for (const filePath of filePaths) {
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (fileErr) {
+        console.warn(`[API Tickets Bulk DELETE] Impossibile eliminare fisicamente il file ${filePath}:`, fileErr);
+      }
+    }
+
+    // Cascade delete DB records
+    await db.attachment.deleteMany({
+      where: {
+        OR: [
+          { ticketId: { in: existingIds } },
+          { message: { ticketId: { in: existingIds } } },
+        ],
+      },
+    });
+
+    await db.message.deleteMany({
+      where: { ticketId: { in: existingIds } },
+    });
+
+    const deleteResult = await db.ticket.deleteMany({
+      where: { id: { in: existingIds } },
+    });
+
+    return NextResponse.json({
+      success: true,
+      count: deleteResult.count,
+      message: `${deleteResult.count} ticket eliminati definitivamente con successo.`,
+    });
+  } catch (error) {
+    console.error('[API Tickets Bulk DELETE] Errore durante l\'eliminazione massiva dei ticket:', error);
+    return NextResponse.json({ error: 'Errore interno durante l\'eliminazione dei ticket.' }, { status: 500 });
+  }
+}
+

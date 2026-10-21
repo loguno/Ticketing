@@ -9,10 +9,11 @@ const JWT_SECRET = new TextEncoder().encode(
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow login, public API authentication, next.js internals, and home page
+  // Allow login, public API authentication, telegram webhook, next.js internals, and home page
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/telegram/webhook') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||
     pathname === '/'
@@ -20,10 +21,37 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const isApiRoute = pathname.startsWith('/api/');
+  const configuredApiKey = process.env.TICKETS_API_KEY;
+
+  // 1. Check Service API Key (for external systems, Telegram bot, AI assistant)
+  const apiKeyHeader = request.headers.get('x-api-key');
+  const authHeader = request.headers.get('authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  const providedKey = apiKeyHeader || bearerToken;
+
+  if (configuredApiKey && providedKey && providedKey === configuredApiKey) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-user-id', 'api-service');
+    requestHeaders.set('x-user-role', 'ADMIN');
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  // 2. Check JWT Session Cookie
   const token = request.cookies.get('token')?.value;
 
   if (!token) {
-    // Redirect to login if token is missing
+    if (isApiRoute) {
+      return NextResponse.json(
+        { error: 'Non autorizzato: token di sessione mancante o API Key non valida.' },
+        { status: 401 }
+      );
+    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
@@ -50,7 +78,12 @@ export async function proxy(request: NextRequest) {
       },
     });
   } catch {
-    // Invalid or expired token -> delete cookie and redirect to login
+    if (isApiRoute) {
+      return NextResponse.json(
+        { error: 'Non autorizzato: token di sessione non valido o scaduto.' },
+        { status: 401 }
+      );
+    }
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('token');
     return response;
