@@ -136,6 +136,19 @@ export default function AiAssistantDrawer() {
     [inputMessage, isLoading, messages]
   );
 
+  // Listen for open-ai-assistant custom events from sidebar or other components
+  useEffect(() => {
+    const handleOpenEvent = (e: Event) => {
+      setIsOpen(true);
+      const customEvent = e as CustomEvent<{ prompt?: string }>;
+      if (customEvent.detail?.prompt) {
+        handleSendMessage(customEvent.detail.prompt);
+      }
+    };
+    window.addEventListener('open-ai-assistant', handleOpenEvent);
+    return () => window.removeEventListener('open-ai-assistant', handleOpenEvent);
+  }, [handleSendMessage]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

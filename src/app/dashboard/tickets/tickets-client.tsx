@@ -291,13 +291,30 @@ export default function TicketsClient({ user }: TicketsClientProps) {
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">Ticket</h1>
             <p className="text-sm text-gray-500 mt-1">Gestione e monitoraggio delle segnalazioni di assistenza</p>
           </div>
-          <button
-            id="btn-nuovo-ticket"
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-[#004B97] hover:bg-[#003a75] text-white text-sm font-bold px-5 py-3 rounded-xl transition-all shadow-sm cursor-pointer"
-          >
-            + Crea Ticket
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(
+                    new CustomEvent('open-ai-assistant', { detail: { prompt: 'Genera To-Do di Oggi' } })
+                  );
+                }
+              }}
+              className="flex items-center gap-2 bg-[#0f172a] hover:bg-slate-800 text-amber-300 hover:text-amber-200 text-sm font-bold px-4 py-3 rounded-xl transition-all shadow-sm border border-slate-700/80 cursor-pointer"
+              title="Apri l'Assistente AI per consultare il Briefing e le priorità del giorno"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span>Briefing AI</span>
+            </button>
+            <button
+              id="btn-nuovo-ticket"
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 bg-[#004B97] hover:bg-[#003a75] text-white text-sm font-bold px-5 py-3 rounded-xl transition-all shadow-sm cursor-pointer"
+            >
+              + Crea Ticket
+            </button>
+          </div>
         </div>
 
         {/* Flashing Alert Banner for Support Team */}
