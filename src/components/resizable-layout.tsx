@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Sidebar from './sidebar';
+import AiAssistantDrawer from './ai-assistant-drawer';
 
 interface UserInfo {
   name: string;
@@ -114,6 +115,9 @@ export default function ResizableLayout({ user, children }: ResizableLayoutProps
       >
         {children}
       </div>
+
+      {/* Floating AI Assistant Drawer for Tickets */}
+      <AiAssistantDrawer />
     </div>
   );
 }

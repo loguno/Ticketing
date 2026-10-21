@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const http = require('http');
 
 const API_KEY = 'tk_sec_dev_2026_ticket_service_key';
